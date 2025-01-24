@@ -7,12 +7,12 @@ CFLAGS=-m4-nofpu -mb -Os -mhitachi -Wall -nostdlib -I$(PREFIX)include -lfxcg -lg
 LDFLAGS=$(CFLAGS) -T$(PREFIX)/toolchain/prizm.x -Wl,-static -Wl,-gc-sections
 
 # Specify your source files here
-CSOURCES=template.cpp
+CSOURCES=snake.cpp src/render.cpp src/utils.cpp
 SHSOURCES=
 OBJECTS=$(SHSOURCES:.s=.o) $(CSOURCES:.cpp=.o)
 
 # Specify output binary and G3A files
-BIN=$(OUTDIR)/template.bin
+BIN=$(OUTDIR)/snake.bin
 ADDIN=$(BIN:.bin=.g3a)
 
 all: $(ADDIN)
@@ -22,7 +22,7 @@ $(BIN): $(OBJECTS)
 
 
 $(ADDIN): $(BIN)
-	$(MKG3A) -n "tmp-name" $< $@
+	$(MKG3A) -n "Snake" $< $@
 
 %.o: %.cpp
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -31,11 +31,10 @@ $(ADDIN): $(BIN)
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	del /Q "main.o"
-	del /Q "src\\physics.o"
-	del /Q "src\\utils.o"
-	del /Q "src\\raycasting.o"
-	del /Q "template.bin"
-	del /Q "template.g3a"
+	del /Q "snake.o"
+	del /Q "src/render.o"
+	del /Q "src/utils.o"
+	del /Q "snake.bin"
+	del /Q "snake.g3a"
 
 
