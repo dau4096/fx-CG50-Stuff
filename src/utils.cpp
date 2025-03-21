@@ -26,7 +26,7 @@ Snake shiftSegments(Snake snakeInstance) {
 }
 
 
-float fmod(float numerator, float divisor) {
+inline float fmod(float numerator, float divisor) {
 	if (divisor == 0.0f) return 0.0f;
 	int divis = static_cast<int>(numerator / divisor);
 	return numerator - (divisor * divis);

@@ -17,12 +17,12 @@ namespace render{
 
 
 
-unsigned short createColour(unsigned char r, unsigned char g, unsigned char b) {
+unsigned inline short  createColour(unsigned char r, unsigned char g, unsigned char b) {
 	return ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
 }
 
 
-void drawPixel(int x, int y, unsigned short colour) {
+inline void  drawPixel(int x, int y, unsigned short colour) {
 	if (x >= 0 && x < LCD_WIDTH_PX && y >= 0 && y < LCD_HEIGHT_PX) {
 		Bdisp_SetPoint_VRAM(x, y+24, colour);
 	}
@@ -31,19 +31,19 @@ void drawPixel(int x, int y, unsigned short colour) {
 
 
 
-void drawVLine(int x, int y, int length, unsigned short colour) {
+inline void  drawVLine(int x, int y, int length, unsigned short colour) {
 	for (int offset = 0; offset <= length; offset++) {
 		drawPixel(x, y + offset, colour);
 	}
 }
 
-void drawHLine(int x, int y, int length, unsigned short colour) {
+inline void  drawHLine(int x, int y, int length, unsigned short colour) {
 	for (int offset = 0; offset <= length; offset++) {
 		drawPixel(x + offset, y, colour);
 	}
 }
 
-vec2 pixelPos(vec2 gridPosition) {
+inline vec2  pixelPos(vec2 gridPosition) {
 	return vec2(gridPosition.x * 17, (gridPosition.y * 17)); //24px vertical offset for top-bar.
 }
 
@@ -222,7 +222,7 @@ void tail(vec2 position, int direction, int idx) {
 
 
 
-int getDir(vec2 thisSegment, vec2 otherSegment) {
+inline int  getDir(vec2 thisSegment, vec2 otherSegment) {
     if (thisSegment.y < otherSegment.y) { // Connect Up
         return UP;
     } else if (thisSegment.y > otherSegment.y) { // Connect Down

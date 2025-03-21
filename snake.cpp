@@ -11,10 +11,10 @@ extern "C" {
 #include "src/render.h"
 
 
-int key, direction;
+int direction;
 
 
-int keyPressed(int basic_keycode){
+inline int keyPressed(int basic_keycode){
     const unsigned short* keyboard_register = (unsigned short*)0xA44B0000;
     int row, col, word, bit;
     row = basic_keycode%10;
@@ -24,7 +24,7 @@ int keyPressed(int basic_keycode){
     return (0 != (keyboard_register[word] & 1<<bit));
 }
 
-void wait(int ms) {
+inline void wait(int ms) {
 	int start_value = RTC_GetTicks();
 	while (RTC_Elapsed_ms(start_value, ms) < ms) {
 	}
@@ -59,28 +59,27 @@ int main() {
 		utils::randomInRange(0, gridSize.y)
 	);
 
+	int col = 0, row = 0;
 	int frame = 0;
 	while (1) { //Constant loop until exit.
 		//GetKey(&key); //Requires keypress to see next frame; fix somehow.
 		//Handle input
-		if (key == KEY_CTRL_EXIT || frame > 100) {
-			key = 0;
-			break; //Exit program immediately.
-		}
+		if (keyPressed(KEY_CTRL_EXIT) || frame > 200) break; // Exit on EXIT key.
+
+		//Change direction with the D-Pad type input.
+		if (keyPressed(KEY_CTRL_UP)) direction = UP;
+		if (keyPressed(KEY_CTRL_DOWN)) direction = DOWN;
+		if (keyPressed(KEY_CTRL_LEFT)) direction = LEFT;
+		if (keyPressed(KEY_CTRL_RIGHT)) direction = RIGHT;
+		//Otherwise keep moving the same direction.
 		frame++;
 
 
-		//Change direction with the D-Pad type input.
-		if (key == KEY_CTRL_UP) direction = UP;
-		if (key == KEY_CTRL_DOWN) direction = DOWN;
-		if (key == KEY_CTRL_LEFT) direction = LEFT;
-		if (key == KEY_CTRL_RIGHT) direction = RIGHT;
-		//Otherwise keep moving the same direction.
 
 
 		render::drawApple(applePos);
 
-		//snake = utils::movement(snake, direction, applePos);
+		snake = utils::movement(snake, direction, applePos);
 
 		switch (snake.state) {
 			case EATING:
@@ -101,10 +100,9 @@ int main() {
 
 		render::drawSnake(snake, direction);
 		
-		/*
-		//!Replace with valid function!
+		//Wait.
 		wait(100); //10Hz-ish.
-		*/
+		
 
 		//Grid.
 		for (int x = 0; x < 23; x++) {
