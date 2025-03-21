@@ -114,8 +114,8 @@ float abs(float value) {
 }
 
 int scaleAngleInt(float angle) {
-    int scaledAngle = static_cast<int>((angle + 2.5f) / 5);
-    return (scaledAngle % 72 + 72) % 72;
+    int scaledAngle = static_cast<int>(angle + 0.5f);
+    return (scaledAngle % 360 + 360) % 360;
 }
 
 float sin(float angle) {
