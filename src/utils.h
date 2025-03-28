@@ -28,26 +28,6 @@ struct vec3 {
 		: x(x), y(y), z(z) {}
 };
 
-struct Material {
-	unsigned short colour;
-	bool hasShadow, valid;
-
-	constexpr Material() : colour(0x0000), hasShadow(false), valid(false) {}
-	constexpr Material(vec3 colour, bool hasShadow)
-		: colour(static_cast<unsigned short>(((static_cast<int>(colour.x) >> 3) << 11) | ((static_cast<int>(colour.y) >> 2) << 5) | (static_cast<int>(colour.z) >> 3))), hasShadow(hasShadow), valid(true) {}
-};
-
-struct Tile {
-	vec2 position;
-	const Material* material;
-	bool valid;
-
-	constexpr Tile() : position(0, 0), material(nullptr), valid(false) {}
-	constexpr Tile(vec2 position, const Material* material)
-		: position(position), material(material), valid(true) {}
-};
-
-
 //Invalids and constants.
 constexpr vec2 INVALID = vec2(0xFFFFFFFF, 0xFFFFFFFF);
 namespace display {
@@ -57,16 +37,16 @@ namespace display {
 	constexpr int TILE_GRID_WIDTH = 12;
 	constexpr int TILE_GRID_HEIGHT = TILE_GRID_WIDTH * (LCD_HEIGHT_PX - MENU_HEIGHT) / LCD_WIDTH_PX;
 	constexpr float TILE_GRID_SCALE = LCD_WIDTH_PX / TILE_GRID_WIDTH;
-	constexpr vec2 TILE_GRID_OFFSET = vec2(-24, -24);
+	constexpr vec2 TILE_GRID_OFFSET = vec2(TILE_GRID_SCALE/2, 0);
 
 	constexpr int MAX_TILES = TILE_GRID_WIDTH * TILE_GRID_HEIGHT;
 	constexpr int MAX_MATERIALS = 16;
 
 
 	//Colour stuff.
-	constexpr Side SHADOW_SIDE = NONE;
-	constexpr unsigned short SHADOW_SHADING_SIDE = 0x10A2;
-	constexpr unsigned short SHADOW_SHADING_TOP = 0x0841;
+	constexpr Side SHADOW_SIDE = RIGHT;
+	constexpr int SHADOW_SHADING = 64;
+	constexpr int SHADOW_SHADING_ALT = 32;
 
 
 	constexpr unsigned short RGB565_BLACK = 0x0000;
@@ -80,6 +60,40 @@ namespace display {
 
 }
 constexpr unsigned short INVALID_COLOUR = display::RGB565_MAGENTA;
+
+
+
+constexpr float restrictV(float value, float minV, float maxV) {
+	return (value <= maxV) ? ((value >= minV) ? value : minV) : maxV;
+}
+constexpr unsigned short cColour(int r, int g, int b) {
+	int rF = restrictV(r, 0x00, 0xFF), gF = restrictV(g, 0x00, 0xFF), bF = restrictV(b, 0x00, 0xFF);
+	return static_cast<unsigned short>((rF >> 3) << 11) | ((gF >> 2) << 5) | (bF >> 3);
+}
+struct Material {
+	unsigned short colourUnshaded, colourShadeR, colourShadeL;
+	bool hasShadow, valid;
+
+	constexpr Material() : colourUnshaded(0x0000), colourShadeR(0x0000), colourShadeL(0x0000), hasShadow(false), valid(false) {}
+	constexpr Material(vec3 colour, bool hasShadow)
+		: colourUnshaded(cColour(colour.x, colour.y, colour.z)),
+		colourShadeR(cColour(colour.x - display::SHADOW_SHADING, colour.y - display::SHADOW_SHADING, colour.z - display::SHADOW_SHADING)),
+		colourShadeL(cColour(colour.x - display::SHADOW_SHADING_ALT, colour.y - display::SHADOW_SHADING_ALT, colour.z - display::SHADOW_SHADING_ALT)),
+		hasShadow(hasShadow), valid(true) {}
+};
+
+struct Tile {
+	vec2 position;
+	const Material* material;
+	bool valid;
+
+	constexpr Tile() : position(0, 0), material(nullptr), valid(false) {}
+	constexpr Tile(int index, const Material* material)
+		: position(vec2(index % display::TILE_GRID_WIDTH, index / display::TILE_GRID_WIDTH)), material(material), valid(true) {}
+};
+
+
+
 
 //Materials
 namespace material {
@@ -95,6 +109,7 @@ namespace utils {
 
 	//CASIO SDK Specific;
 	unsigned short createColour(unsigned char r, unsigned char g, unsigned char b);
+	vec3 reverseColour(unsigned short colourRGB565);
 
 
 	//Vector operations

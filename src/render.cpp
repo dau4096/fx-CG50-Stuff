@@ -12,20 +12,8 @@ using namespace utils;
 namespace render {
 
 
-unsigned short shade(unsigned short colour, Side sideToShade) {
-	int newColour = colour;
-	if ((sideToShade & TOP) != 0) {
-		newColour = utils::min(colour + display::SHADOW_SHADING_TOP, 0xFFFF);
-	} else if (((sideToShade & LEFT) | (sideToShade & RIGHT)) != 0) {
-		newColour = utils::max(colour - display::SHADOW_SHADING_SIDE, 0x0000);
-	}
-	unsigned short reformattedColour = static_cast<unsigned short>(newColour & 0xFFFF);
-	return reformattedColour;
-}
-
-
 void drawPixel(int xPosition, int yPosition, unsigned short colour) {
-	const int newY = yPosition + display::MENU_HEIGHT;
+	int newY = yPosition + display::MENU_HEIGHT;
 	if (xPosition >= 0 && xPosition < LCD_WIDTH_PX && newY >= 0 && newY < LCD_HEIGHT_PX) {
 		Bdisp_SetPoint_VRAM(xPosition, newY, colour);
 	}
@@ -33,8 +21,8 @@ void drawPixel(int xPosition, int yPosition, unsigned short colour) {
 
 
 void drawLine(int xPosition, int startY, int endY, unsigned short colour) {
-	const int minY = utils::min(startY, endY);
-	const int yRange = utils::abs(endY - startY);
+	int minY = utils::min(startY, endY);
+	int yRange = utils::abs(endY - startY);
 	if (xPosition >= 0 && xPosition < LCD_WIDTH_PX) {
 		for (int yOffset = 0; yOffset < yRange; yOffset++) {
 			drawPixel(xPosition, minY + yOffset, colour);
@@ -56,59 +44,64 @@ void drawCursor(vec2 cursorPosition, const Tile (*tileData)[display::MAX_TILES])
 		if (!neighbourTile.valid) {sidesToDraw |= RIGHT; /* Draw right side */}
 	}
 
-	//Draw it now, given the sides to draw.
+	//Draw it now, given the sides to draw. [TODO]
 }
 
 
 void drawTile(const Tile* tile, Side sidesToDraw=ALL) {
+	//Handle material and tile positional offsets.
 	const Material& thisMaterial = tile->material ? *(tile->material) : material::MAGENTA; //.material is a pointer to a Material instance
-	const xOffset = (tile->position.x * display::TILE_GRID_SCALE) + display::TILE_GRID_OFFSET.x;
-	const yOffset = (tile->position.y * display::TILE_GRID_SCALE) + display::TILE_GRID_OFFSET.y;
+	int xOffset = (tile->position.x * display::TILE_GRID_SCALE) + display::TILE_GRID_OFFSET.x;
+	int yOffset = (tile->position.y * display::TILE_GRID_SCALE) + display::TILE_GRID_OFFSET.y;
 	if ((int(tile->position.y) & 1) == 0) {xOffset += display::TILE_GRID_SCALE/2; /* Even Y values offset right by half a tile. */}
 
+
+	//Draw top 2:1 Rhombus
 	if ((sidesToDraw & TOP) != 0) {
 		printTXT((const char*)"  Top was drawn");
-		unsigned short topColour = thisMaterial.colour;
-		if (thisMaterial.hasShadow) {topColour = shade(topColour, TOP);}
+		unsigned short topColour = thisMaterial.colourUnshaded;
 
-		for (int x=0; x<display::TILE_GRID_SCALE/2; x++) {
-			const int height = display::TILE_GRID_SCALE/4 - x/2;
-			const int onscreenY = yOffset + x/2;
+		for (int x = 0; x < display::TILE_GRID_SCALE/2; x++) {
+			int height = display::TILE_GRID_SCALE/2 - x;
+			int onscreenY = yOffset - display::TILE_GRID_SCALE/4 + x/2;
 
-			//Left half of the diamond.
-			const int xLeft = xOffset - x;
-			drawLine(xLeft, onscreenY, onscreenY + height, topColour); 
+			int xLeft = xOffset + (display::TILE_GRID_SCALE/2) - x;
+			drawLine(xLeft, onscreenY, onscreenY + height, topColour);
 
-			//Right half of the diamond.
-			const int xRight = xOffset + x;
+			int xRight = xOffset + (display::TILE_GRID_SCALE/2) + x + 1;
 			drawLine(xRight, onscreenY, onscreenY + height, topColour);
 		}
 	}
 
+
+	//Draw Left parallelogram.
 	if ((sidesToDraw & LEFT) != 0) {
 		printTXT((const char*)"  Left was drawn");
-		unsigned short leftColour = thisMaterial.colour;
-		const int height = display::TILE_GRID_SCALE / 2;
+		unsigned short leftColour;
+		if ((thisMaterial.hasShadow)) {leftColour = thisMaterial.colourShadeL;}
+		else {leftColour = thisMaterial.colourUnshaded;}
+		int height = display::TILE_GRID_SCALE / 2;
 
-		if ((thisMaterial.hasShadow) && (display::SHADOW_SIDE == LEFT)) {leftColour = shade(leftColour, LEFT);}
 
 		for (int x=0; x<height; x++) {
-			const int onscreenX = xOffset + x;	
-			const int onscreenY = yOffset + x/2;
+			int onscreenX = xOffset + x;	
+			int onscreenY = yOffset + x/2;
 			drawLine(onscreenX, onscreenY, onscreenY + height, leftColour);
 		}
 	}
 
+
+	//Draw Right parallelogram.
 	if ((sidesToDraw & RIGHT) != 0) {
 		printTXT((const char*)"  Right was drawn");
-		unsigned short rightColour = thisMaterial.colour;
-		const int height = display::TILE_GRID_SCALE / 2;
-
-		if ((thisMaterial.hasShadow) && (display::SHADOW_SIDE == RIGHT)) {rightColour = shade(rightColour, RIGHT);}
+		unsigned short rightColour;
+		if ((thisMaterial.hasShadow)) {rightColour = thisMaterial.colourShadeR;}
+		else {rightColour = thisMaterial.colourUnshaded;}
+		int height = display::TILE_GRID_SCALE / 2;
 
 		for (int x=display::TILE_GRID_SCALE; x>=height; x--) {
-			const int onscreenX = xOffset + x;	
-			const int onscreenY = yOffset - x/2;
+			int onscreenX = xOffset + x;	
+			int onscreenY = yOffset - x/2;
 			drawLine(onscreenX, onscreenY + height, onscreenY + display::TILE_GRID_SCALE, rightColour);
 		}
 	}

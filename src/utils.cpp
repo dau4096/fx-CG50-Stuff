@@ -7,11 +7,19 @@ extern "C" {
 using namespace std;
 
 
+
 namespace utils {
 
 
 unsigned short createColour(unsigned char r, unsigned char g, unsigned char b) {
 	return ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
+}
+
+vec3 reverseColour(unsigned short colourRGB565) {
+	int r = (colourRGB565 & 0xF800) >> 8; //First 5 bits
+	int g = (colourRGB565 & 0x07E0) >> 3; //Next 6 bits
+	int b = (colourRGB565 & 0x001F); // >> 0; //Last 5 bits
+	return vec3(r, g, b);
 }
 
 
@@ -80,7 +88,7 @@ float max(float A, float B) {
 }
 
 float clamp(float value, float minV, float maxV) {
-	return max(minV, min(value, maxV));
+	return (value <= maxV) ? ((value >= minV) ? value : minV) : maxV;
 }
 
 float abs(float value) {

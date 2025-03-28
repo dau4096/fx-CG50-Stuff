@@ -30,7 +30,8 @@ int keyPressed(int basic_keycode){
 
 int main() {
 	Tile tileGrid[display::MAX_TILES] = {
-		Tile(vec2(0, 0), &(material::CYAN)),
+		Tile(0, &(material::CYAN)),
+		Tile(12, &(material::MAGENTA)),
 	};
 	tileGrid[0].valid = true;
 
