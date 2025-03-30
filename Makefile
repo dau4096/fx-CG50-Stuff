@@ -3,11 +3,11 @@ CC=$(PREFIX)bin/sh3eb-elf-g++.exe
 MKG3A=$(PREFIX)bin/mkg3a.exe
 OUTDIR=.
 RM=del
-CFLAGS=-m4-nofpu -mb -Os -mhitachi -Wall -nostdlib -I$(PREFIX)include -lfxcg -lgcc -L$(PREFIX)lib
+CFLAGS=-m4-nofpu -mb -Os -mhitachi -Wall -nostartfiles -I$(PREFIX)include -lfxcg -lgcc -L$(PREFIX)lib -fpermissive
 LDFLAGS=$(CFLAGS) -T$(PREFIX)/toolchain/prizm.x -Wl,-static -Wl,-gc-sections
 
 # Specify your source files here
-CSOURCES=template.cpp
+CSOURCES=main.cpp src\\utils.cpp
 SHSOURCES=
 OBJECTS=$(SHSOURCES:.s=.o) $(CSOURCES:.cpp=.o)
 
@@ -22,7 +22,7 @@ $(BIN): $(OBJECTS)
 
 
 $(ADDIN): $(BIN)
-	$(MKG3A) -n "tmp-name" $< $@
+	$(MKG3A) -n "[tmp-name]" $< $@
 
 %.o: %.cpp
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -32,9 +32,7 @@ $(ADDIN): $(BIN)
 
 clean:
 	del /Q "main.o"
-	del /Q "src\\physics.o"
 	del /Q "src\\utils.o"
-	del /Q "src\\raycasting.o"
 	del /Q "template.bin"
 	del /Q "template.g3a"
 
