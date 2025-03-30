@@ -82,7 +82,7 @@ namespace utils {
 
 
 	//Keypress functions
-	void keyUpdateAlt(); //Call every frame.
+	void keyUpdate(); //Call every frame.
 	bool isKeyPressed(int basicKeycode); //Pass in SDK Enum and returns bool. Non-blocking.
 }
 

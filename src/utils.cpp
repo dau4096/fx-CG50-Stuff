@@ -94,7 +94,7 @@ void clearRNG() {
 int keyResultColumn = 0, keyResultRow = 0, keyResult = 0;
 unsigned short keyResultKeycode = 0;
 
-void keyUpdateAlt() {  
+void keyUpdate() {  
     keyResult = GetKeyWait_OS(&keyResultColumn, &keyResultRow, KEYWAIT_HALTOFF_TIMEROFF, 0, 1, &keyResultKeycode);
 }
 bool isKeyPressed(int basicKeycode) {

@@ -9,7 +9,6 @@ extern "C" {
 using namespace std;
 using namespace utils;
 
-int key;
 
 int main() {
     //SDK Initialisation
@@ -17,13 +16,10 @@ int main() {
     Bdisp_AllClr_VRAM();
     Bdisp_PutDisp_DD();
 
-    int t=0;
     while (1) { //Constant loop until exit.
-        utils::keyUpdateAlt();
-        t++;
+        utils::keyUpdate();
         //Handle input
-        if (utils::isKeyPressed(0x0408) || t > 500) {
-            key = 0;
+        if (utils::isKeyPressed(key::EXIT) || utils::isKeyPressed(key::AC_ON)) {
             break; //Exit program immediately.
         }
 
