@@ -7,7 +7,7 @@ CFLAGS=-m4-nofpu -mb -Os -mhitachi -Wall -nostdlib -I$(PREFIX)include -lfxcg -lg
 LDFLAGS=$(CFLAGS) -T$(PREFIX)/toolchain/prizm.x -Wl,-static -Wl,-gc-sections
 
 # Specify your source files here
-CSOURCES=snake.cpp src/render.cpp src/utils.cpp
+CSOURCES=main.cpp src/render.cpp src/utils.cpp
 SHSOURCES=
 OBJECTS=$(SHSOURCES:.s=.o) $(CSOURCES:.cpp=.o)
 
@@ -31,7 +31,7 @@ $(ADDIN): $(BIN)
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	del /Q "snake.o"
+	del /Q "main.o"
 	del /Q "src/render.o"
 	del /Q "src/utils.o"
 	del /Q "snake.bin"
