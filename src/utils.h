@@ -119,6 +119,47 @@ namespace utils {
 	Snake createSnake(vec2 startPoint);
 	Snake movement(Snake snakeInstance, bool (*snakeMap)[display::GRID_SIZE.x * display::GRID_SIZE.y], int direction, vec2 applePos);
 
+
+	static inline const char* getScoreInt(int digit) {
+		switch (digit) {
+			case 0:
+				return (const char*)"  0";
+			case 1:
+				return (const char*)"  1";
+			case 2:
+				return (const char*)"  2";
+			case 3:
+				return (const char*)"  3";
+			case 4:
+				return (const char*)"  4";
+			case 5:
+				return (const char*)"  5";
+			case 6:
+				return (const char*)"  6";
+			case 7:
+				return (const char*)"  7";
+			case 8:
+				return (const char*)"  8";
+			case 9:
+				return (const char*)"  9";
+		}
+		return (const char*)"  X";
+	};
+	static inline void showScore(int score) {
+		int units = score % 10;
+		int tens = (score % 100) / 10;
+		int hundreds = score / 100;
+
+
+		PrintXY(20, 2, (const char*)"  S", 0, 0);
+		const char* charHund = getScoreInt(hundreds);
+		PrintXY(20, 3, charHund, 0, 0);
+		const char* charTens = getScoreInt(tens);
+		PrintXY(20, 4, charTens, 0, 0);
+		const char* charUnit = getScoreInt(units);
+		PrintXY(20, 5, charUnit, 0, 0);
+	};
+
 	int randomInRange(int min, int max);
 
 }

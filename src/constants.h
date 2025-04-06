@@ -32,9 +32,11 @@ namespace snakeCFG {
 namespace display {
 	constexpr int MENU_HEIGHT = 24;
 
-	constexpr vec2 GRID_SIZE = vec2(21, 12);
-	constexpr bool DEBUG_SPRITES = false;
+	constexpr vec2 GRID_SIZE = vec2(20, 11);
 
+	constexpr bool DRAW_GRID = false;
+	constexpr bool DRAW_BOUNDARY = true;
+	constexpr bool DRAW_SCORE = true;
 }
 
 

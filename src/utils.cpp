@@ -171,8 +171,8 @@ Snake movement(Snake snakeInstance, bool (*snakeMap)[display::GRID_SIZE.x * disp
 	headPos.y = fmod((headPos.y + display::GRID_SIZE.y), display::GRID_SIZE.y);
 
 
-	//snakeMap[(headPos.y * display::GRID_SIZE.x) + headPos.x] = true;
-	//snakeMap[(tailPos.y * display::GRID_SIZE.x) + tailPos.x] = false;
+	(*snakeMap)[(headPos.y * display::GRID_SIZE.x) + headPos.x] = true;
+	(*snakeMap)[(tailPos.y * display::GRID_SIZE.x) + tailPos.x] = false;
 
 
 	for (int idx = 1; idx < snakeInstance.length; idx++) {
@@ -185,10 +185,13 @@ Snake movement(Snake snakeInstance, bool (*snakeMap)[display::GRID_SIZE.x * disp
 
 
 	snakeInstance.segments[0] = headPos;
-	if (headPos.x == applePos.x && headPos.y == applePos.y) {
+	if (headPos.x == applePos.x && headPos.y == applePos.y && snakeInstance.state != S_EATING) {
 		snakeInstance.length += 1;
 		snakeInstance.state = S_EATING; //Eating
-		snakeInstance.segments[snakeInstance.length-1] = snakeInstance.segments[snakeInstance.length-2];
+
+		vec2 prevLast = snakeInstance.segments[snakeInstance.length-2];
+		snakeInstance.segments[snakeInstance.length-1] = prevLast;
+		snakeInstance.segments[snakeInstance.length] = prevLast;
 		return snakeInstance;
 	}
 
