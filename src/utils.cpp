@@ -23,7 +23,7 @@ float sqrtApprox(float value) {
 	while (true) {
 		float newGuess = 0.5f * (guess + value / guess);  //Update guess using Newton's method
 		iterations++;
-		if (utils::abs(newGuess - guess) < EPSILON_LOCAL || iterations >= MAX_SQRT_ITERATIONS) {
+		if (abs(newGuess - guess) < EPSILON_LOCAL || iterations >= MAX_SQRT_ITERATIONS) {
 			break;  //Stop when the guess is sufficiently accurate
 		}
 		guess = newGuess;
@@ -95,7 +95,7 @@ int keyResultColumn = 0, keyResultRow = 0, keyResult = 0;
 unsigned short keyResultKeycode = 0;
 
 void keyUpdate() {  
-    keyResult = GetKeyWait_OS(&keyResultColumn, &keyResultRow, KEYWAIT_HALTOFF_TIMEROFF, 0, 1, &keyResultKeycode);
+	keyResult = GetKeyWait_OS(&keyResultColumn, &keyResultRow, KEYWAIT_HALTOFF_TIMEROFF, 0, 1, &keyResultKeycode);
 }
 bool isKeyPressed(int basicKeycode) {
 	int thisKeyColumn = (basicKeycode & 0xFF00) >> 8;
@@ -104,5 +104,11 @@ bool isKeyPressed(int basicKeycode) {
 	return (keyResult == KEYREP_KEYEVENT) && (thisKeyRow == keyResultRow) && (thisKeyColumn == keyResultColumn);
 }
 
+
+
+
+int randomInRange(int min, int max) {
+	return min + rand() % (max - min + 1);
+}
 
 }
