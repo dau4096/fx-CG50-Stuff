@@ -1,23 +1,33 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
+extern "C" {
+	#include "C:\Users\User\Documents\code\.cpp\PrizmSDK-win-0.6\include\fxcg/display.h"
+	#include "C:\Users\User\Documents\code\.cpp\PrizmSDK-win-0.6\include\fxcg/keyboard.h"
+	#include "C:\Users\User\Documents\code\.cpp\PrizmSDK-win-0.6\include\fxcg/rtc.h"
+}
 
 #include "structs.h"
 
 
-/*
-//Enums go here. Example;
-Enum Valid {
-	NONE = 0,
-	NO = 1,
-	YES = 2
-}
-*/
+
+constexpr Vec2 INVALIDv2 = Vec2(INF, INF);
+constexpr Vec3 INVALIDv3 = Vec3(INF, INF, INF);
+constexpr float MOVE_SPEED = 0.125f;
+constexpr float TURN_SPEED = 5.0f;
 
 
-constexpr float EPSILON = 1e-4f;
+//Mathematical Constants
+constexpr float PI = 3.14159265358979f;
+constexpr float EXP = 2.71828182845905f;
+
+constexpr float TO_RAD = 0.01745329251994f;
+constexpr float TO_DEG = 57.2957795130824f;
+
 namespace display {
 	//Max Values
 	constexpr int MENU_HEIGHT = 24;
+	constexpr Vec2 SCREEN_RESOLUTION = Vec2(LCD_WIDTH_PX, LCD_HEIGHT_PX);
+	constexpr float ASPECT_RATIO = LCD_WIDTH_PX / LCD_HEIGHT_PX;
 }
 
 namespace RGB565 {

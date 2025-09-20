@@ -33,26 +33,6 @@ float sqrtApprox(float value) {
 }
 
 
-float LENGTH2(vec2 vector) {
-	return sqrtApprox((vector.x * vector.x) + (vector.y * vector.y));
-}
-
-vec2 NORM2(vec2 vector) {
-	float len = LENGTH2(vector);
-	return (len<EPSILON) ? vec2(0.0f, 0.0f) : vec2(vector.x/len, vector.y/len);
-}
-
-
-float LENGTH3(vec3 vector) {
-	return sqrtApprox((vector.x * vector.x) + (vector.y * vector.y) + (vector.z * vector.z));
-}
-
-vec3 NORM3(vec3 vector) {
-	float len = LENGTH3(vector);
-	return (len<EPSILON) ? vec3(0.0f, 0.0f, 0.0f) : vec3(vector.x/len, vector.y/len, vector.z/len);
-}
-
-
 
 int RNGIdx = 0;
 const unsigned char RNGtbl[256] = {
@@ -105,10 +85,5 @@ bool isKeyPressed(int basicKeycode) {
 }
 
 
-
-
-int randomInRange(int min, int max) {
-	return min + rand() % (max - min + 1);
-}
 
 }

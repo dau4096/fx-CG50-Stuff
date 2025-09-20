@@ -11,7 +11,8 @@ CD C:\Users\User\Documents\GitHub\fx-CG50-Stuff
 
 REM Delete any .o files beforehand.
 IF EXIST main.o DEL main.o
-IF EXIST src\utils.o DEL utils.o
+IF EXIST src\utils.o DEL src\utils.o
+IF EXIST src\render.o DEL src\render.o
 
 
 REM Run the Prizm SDK build process with Prizm's make (from SDK)
