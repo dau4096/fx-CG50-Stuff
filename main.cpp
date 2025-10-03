@@ -6,7 +6,7 @@ extern "C" {
 #include "src/structs.h"
 #include "src/constants.h"
 #include "src/utils.h"
-#include "src/render.h"
+#include "src/graphics.h"
 using namespace std;
 using namespace utils;
 
@@ -24,9 +24,9 @@ void TMPFillTris() {
 	data::vertices[1] = Vec3( 1.0f, 0.0f, 0.0f);
 	data::vertices[2] = Vec3( 0.0f, 0.0f, 1.0f);
 
-	data::indices[0] = Vec3(0, 1, 2);
+	data::indices[0] = Vec4(0, 1, 2, 0);
 
-	data::numTris = 1;
+	data::numTris = 1u;
 }
 
 
@@ -52,7 +52,7 @@ void handleMovement(int key) {
 		cos(camera.angle.x),
 		0.0f
 	).normalise();
-	Vec3 right = cross(forward, Vec3(0.0f, 0.0f, 1.0f)).normalise();
+	Vec3 right = forward.cross(Vec3(0.0f, 0.0f, 1.0f)).normalise();
 
 	//Movement
 	if (key == KEY_CHAR_8) {
@@ -90,7 +90,7 @@ int main() {
 		handleMovement(key);
 
 
-		render::drawScene(camera);
+		graphics::drawScene(camera);
 
 
 		Bdisp_PutDisp_DD();

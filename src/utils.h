@@ -16,30 +16,8 @@ constexpr float cosLUT[91] = {1.0, 0.9998, 0.9994, 0.9986, 0.9976, 0.9962, 0.994
 
 //Utility functions
 namespace utils {
-	//Maths
-	float sqrtApprox(float value); //Uses Newton-Raphson for an estimate of the square root.
-	static inline float min(float A, float B) {return (A<B) ? A : B;}
-	static inline float max(float A, float B) {return (A>B) ? A : B;}
-	static inline float clamp(float value, float minV, float maxV) {return (value < maxV) ? ((value > minV) ? value : minV) : maxV;}
-	static inline float abs(float value) {return (value<0) ? -value : value;}
-	static inline float floor(float value) {return static_cast<float>((value >= 0) ? static_cast<int>(value) : static_cast<int>(value) - (value != static_cast<int>(value)));}
-	static inline float ceil(float value) {return static_cast<float>((value <= 0) ? static_cast<int>(value) : static_cast<int>(value) + (value != static_cast<int>(value)));}
-	static inline float fract(float value) {return (value>0) ? (value - floor(value)) : (ceil(value) - value);}
-	//Vector struct operations
-	//vec2;
-	static inline float dot(Vec2 A, Vec2 B) {return A.x*B.x + A.y*B.y;}
-	static inline float determinant(Vec2 A, Vec2 B) {return A.x*B.y - A.y*B.x;}
-	static inline Vec2 min(Vec2 A, Vec2 B) {return Vec2(min(A.x, B.x), min(A.y, B.y));}
-	static inline Vec2 max(Vec2 A, Vec2 B) {return Vec2(max(A.x, B.x), max(A.y, B.y));}
 
-	//vec3;
-	static inline float dot(Vec3 A, Vec3 B) {return A.x*B.x + A.y*B.y + A.z*B.z;}
-	static inline Vec3 cross(Vec3 A, Vec3 B) {return Vec3(A.y*B.z-A.z*B.y, A.z*B.x-A.x*B.z, A.x*B.y-A.y*B.x);}
-	static inline Vec3 min(Vec3 A, Vec3 B) {return Vec3(min(A.x, B.x), min(A.y, B.y), min(A.z, B.z));}
-	static inline Vec3 max(Vec3 A, Vec3 B) {return Vec3(max(A.x, B.x), max(A.y, B.y), max(A.z, B.z));}
-
-
-
+	
 	//CASIO SDK Colour stuff;
 	static inline unsigned short createColour(unsigned char r, unsigned char g, unsigned char b) {
 		return ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);

@@ -17,17 +17,32 @@ constexpr float TURN_SPEED = 5.0f;
 
 
 //Mathematical Constants
-constexpr float PI = 3.14159265358979f;
-constexpr float EXP = 2.71828182845905f;
+#define PI 3.141592f
+#define EXP 2.718281f
 
-constexpr float TO_RAD = 0.01745329251994f;
-constexpr float TO_DEG = 57.2957795130824f;
+#define TO_RAD 0.017453f;
+#define TO_DEG 57.295779f;
 
 namespace display {
 	//Max Values
 	constexpr int MENU_HEIGHT = 24;
 	constexpr Vec2 SCREEN_RESOLUTION = Vec2(LCD_WIDTH_PX, LCD_HEIGHT_PX);
 	constexpr float ASPECT_RATIO = LCD_WIDTH_PX / LCD_HEIGHT_PX;
+
+	constexpr unsigned int MAX_TRIANGLES = 1u;
+	constexpr unsigned int MAX_VERTICES = MAX_TRIANGLES * 3u;
+	constexpr unsigned int MAX_EDGES = (MAX_VERTICES >= 1u) ? MAX_VERTICES - 1u : 0u;
+}
+
+namespace dev {
+	//Rendering options.
+	constexpr bool DRAW_EDGES = false; //Draws the Edge class instances over the triangles
+	constexpr bool DRAW_WIREFRAME = false; //Only draws edges. (Horizontal included)
+	constexpr bool SHOW_CORNERS = false; //Draws markers on each corner for visual coordinate reference
+
+	constexpr bool REQUIRES_EDGES = DRAW_EDGES || DRAW_WIREFRAME;
+
+	constexpr bool DRAW_BACKFACES = true; //If a triangle has inverted winding order (the back) then it corrects that. Can cause issues as method is not ideal.	
 }
 
 namespace RGB565 {

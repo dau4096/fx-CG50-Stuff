@@ -12,28 +12,6 @@ using namespace std;
 namespace utils {
 
 
-float sqrtApprox(float value) {
-	const float EPSILON_LOCAL = 1e-2f; //1-hundreths of precision.
-	const int MAX_SQRT_ITERATIONS = 25;
-	
-	float guess = value * 0.5f;  //x0 = x/2
-	int iterations = 0;
-
-	//Iterate until the guess is sufficiently accurate
-	while (true) {
-		float newGuess = 0.5f * (guess + value / guess);  //Update guess using Newton's method
-		iterations++;
-		if (abs(newGuess - guess) < EPSILON_LOCAL || iterations >= MAX_SQRT_ITERATIONS) {
-			break;  //Stop when the guess is sufficiently accurate
-		}
-		guess = newGuess;
-	}
-
-	return guess;
-}
-
-
-
 int RNGIdx = 0;
 const unsigned char RNGtbl[256] = {
 	0x00, 0x08, 0x6D, 0xDC, 0xDE, 0xF1, 0x95, 0x6B, 0x4B, 0xF8, 0xFE, 0x8C, 0x10, 0x42, 0x4A, 0x15,
