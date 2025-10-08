@@ -30,43 +30,63 @@ void TMPFillTris() {
 }
 
 
-void handleMovement(int key) {
-	//Turning
-	if (key == KEY_PRGM_UP) {
-		camera.angle.y = min(camera.angle.y + TURN_SPEED, 90.0f - TURN_SPEED);
-		return;
-	} else if (key == KEY_PRGM_DOWN) {
-		camera.angle.y = max(camera.angle.y - TURN_SPEED, TURN_SPEED - 90.0f);
-		return;
-	} else if (key == KEY_PRGM_LEFT) {
-		camera.angle.x = camera.angle.x + TURN_SPEED;
-		return;
-	} else if (key == KEY_PRGM_RIGHT) {
-		camera.angle.x = camera.angle.x - TURN_SPEED;
-		return;
-	}
-
-
+void handleMovement(unsigned int key) {
 	Vec3 forward = Vec3(
-		sin(camera.angle.x),
-		cos(camera.angle.x),
+		utils::sin(camera.angle.x),
+		utils::cos(camera.angle.x),
 		0.0f
 	).normalise();
 	Vec3 right = forward.cross(Vec3(0.0f, 0.0f, 1.0f)).normalise();
 
 	//Movement
-	if (key == KEY_CHAR_8) {
-		camera.position = camera.position + forward * MOVE_SPEED;
-		return;
-	} else if (key == KEY_CHAR_2) {
-		camera.position = camera.position - forward * MOVE_SPEED;
-		return;
-	} else if (key == KEY_CHAR_6) {
-		camera.position = camera.position + right * MOVE_SPEED;
-		return;
-	} else if (key == KEY_CHAR_4) {
-		camera.position = camera.position - right * MOVE_SPEED;
-		return;
+	switch (key) {
+		//Turning
+		case KEY_PRGM_UP: {
+			camera.angle.y = maths::min(camera.angle.y + TURN_SPEED, 90.0f - TURN_SPEED);
+			break;
+		}
+		case KEY_PRGM_DOWN: {
+			camera.angle.y = maths::max(camera.angle.y - TURN_SPEED, TURN_SPEED - 90.0f);
+			break;
+		}
+		case KEY_PRGM_LEFT: {
+			camera.angle.x += TURN_SPEED;
+			break;
+		}
+		case KEY_PRGM_RIGHT: {
+			camera.angle.x -= TURN_SPEED;
+			break;
+		}
+
+
+		//Movement
+		case KEY_CHAR_8: {
+			camera.position += forward * MOVE_SPEED;
+			break;
+		}
+		case KEY_CHAR_2: {
+			camera.position -= forward * MOVE_SPEED;
+			break;
+		}
+		case KEY_CHAR_6: {
+			camera.position += right * MOVE_SPEED;
+			break;
+		}
+		case KEY_CHAR_4: {
+			camera.position -= right * MOVE_SPEED;
+			break;
+		}
+		case KEY_CHAR_7: {
+			camera.position.z += MOVE_SPEED;
+			break;
+		}
+		case KEY_CHAR_9: {
+			camera.position.z += MOVE_SPEED;
+			break;
+		}
+		default: {
+			break;
+		}
 	}
 }
 
@@ -77,25 +97,28 @@ int main() {
 	Bdisp_AllClr_VRAM();
 	Bdisp_PutDisp_DD();
 
+	//Graphics setup;
 	TMPFillTris();
-	int key;
+	graphics::createRandomColours();
+	unsigned int key = 0u;
 
-	while (1) { //Constant loop until exit.
+	while (true) { //Constant loop until exit key pressed.
 		//Handle input
 		if (key == KEY_CTRL_EXIT) {
-			key = 0;
+			key = 0u;
 			break; //Exit program immediately.
 		}
 
-		handleMovement(key);
 
+		handleMovement(key);
 
 		graphics::drawScene(camera);
 
 
+		printLines();
 		Bdisp_PutDisp_DD();
 		resetPrintLN();
-		key = 0;
+		key = 0u;
 		GetKey(&key); //For next frame.
 	}
 	return 0;

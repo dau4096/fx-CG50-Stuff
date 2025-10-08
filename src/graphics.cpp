@@ -70,9 +70,40 @@ void projectVertices(Mat4& pvmMatrix) {
 }
 
 
+void sortVerts(Vec4 (*verts)[3]) {
+	//Very crude sorting of 3 vertices. Not intended to scale, just be fast and simplistic.
+    Vec4& A = (*verts)[0];
+    Vec4& B = (*verts)[1];
+    Vec4& C = (*verts)[2];
+
+    //Swap A and B if B is lower
+    if (A.y > B.y) {
+        Vec4 temp = A;
+        A = B;
+        B = temp;
+    }
+
+    //Same for A and C
+    if (A.y > C.y) {
+        Vec4 temp = A;
+        A = C;
+        C = temp;
+    }
+
+    //Same for B and C
+    if (B.y > C.y) {
+        Vec4 temp = B;
+        B = C;
+        C = temp;
+    }
+}
+
+
+
 void handleEdges(
 		Edge* (*edgeAdditions)[LCD_HEIGHT_PX][display::MAX_EDGES],
-		Edge* (*edgeRemovals)[LCD_HEIGHT_PX][display::MAX_EDGES]
+		Edge* (*edgeRemovals)[LCD_HEIGHT_PX][display::MAX_EDGES],
+		Vec2 (*edgeCounts)[LCD_HEIGHT_PX]
 	) {
 	//Create edges.
 	size_t tIndex = 0;
@@ -107,7 +138,8 @@ void handleEdges(
 
 		//Mark edges as screenspace left (starting a triangle) or right (ending a triangle)
 		Vec4 verts[3] = {A,B,C};
-		std::sort(verts.begin(), verts.end(), [](auto& v1, auto& v2) {return v1.y < v2.y;});
+		//std::sort(verts.begin(), verts.end(), [](auto& v1, auto& v2) {return v1.y < v2.y;});
+		sortVerts(&verts);
 
 
 		Edge longEdge = Edge(verts[0], verts[2], triIndex, true);
@@ -126,10 +158,10 @@ void handleEdges(
 			longEdge.isLeftEdge = true;
 		}
 
-		unsigned int startIDX = (tIndex * 3);
-		data::edges[startIDX + 0] = longEdge;
-		data::edges[startIDX + 1] = shortEdgeA;
-		data::edges[startIDX + 2] = shortEdgeB;
+		unsigned int startIDX = (tIndex * 3u);
+		data::edges[startIDX + 0u] = longEdge;
+		data::edges[startIDX + 1u] = shortEdgeA;
+		data::edges[startIDX + 2u] = shortEdgeB;
 
 		tIndex++;
 	}
@@ -146,24 +178,55 @@ void handleEdges(
 
 		//Find start of edge and add to relevant line of the additions vector.
 		if ((yMin >= 0) && (yMin < LCD_HEIGHT_PX)) {
-			edgeAdditions[yMin].emplace_back(&e);
+			(*edgeAdditions)[yMin][static_cast<int>(((*edgeCounts)[yMin].x)++)] = &e;
 		}
 
 		//Find end of edge and add to relevant line of the additions vector.
 		if ((yMax >= 0) && (yMax < LCD_HEIGHT_PX)) {
-			edgeRemovals[yMax].emplace_back(&e);
+			(*edgeRemovals)[yMax][static_cast<int>(((*edgeCounts)[yMin].y)++)] = &e;
 		}
 	}
 }
 
 
-unsigned int stackLength = 0u;
+unsigned int triangleStackLength = 0u;
 TriData triangleStack[display::MAX_TRIANGLES];
 TriData* getActiveTriangle() {
-    if (stackLength > 0u) {
-        return &triangleStack[0]; // pointer to real object in stack
-    }
-    return nullptr;
+	if (triangleStackLength > 0u) {
+		return &triangleStack[0]; // pointer to real object in stack
+	}
+	return nullptr;
+}
+
+bool insert(unsigned int insIndex, const TriData& data) {
+	if ((triangleStackLength >= display::MAX_TRIANGLES) || (insIndex > triangleStackLength)) {return false;}
+
+	if (insIndex < triangleStackLength) {
+		memmove(
+			&triangleStack[insIndex + 1],	//Dest
+			&triangleStack[insIndex],		//SRC
+			sizeof(TriData) * (triangleStackLength - insIndex) //Size, Bytes.
+		);
+	}
+
+	triangleStack[insIndex] = data;
+	++triangleStackLength;
+	return true;
+}
+
+bool remove(unsigned int rmIndex) {
+	if (rmIndex >= triangleStackLength) {return false;}
+
+	if (rmIndex < triangleStackLength - 1) {
+		memmove(
+			&triangleStack[rmIndex],         //Dest
+			&triangleStack[rmIndex + 1],     //SRC
+			sizeof(TriData) * (triangleStackLength - rmIndex - 1) //Size, Bytes.
+		);
+	}
+
+	--triangleStackLength;
+	return true;
 }
 
 bool manageStack(Edge* thisEdge, Span* thisSpan, unsigned int yScan) {
@@ -176,8 +239,8 @@ bool manageStack(Edge* thisEdge, Span* thisSpan, unsigned int yScan) {
 			thisEdge->triIndex, thisEdge->currentZ
 		);
 		if (!hasActiveTriangle) { //No triangles are currently active.
-			triangleStack[stackLength] = newTriangle;
-			stackLength++;
+			triangleStack[triangleStackLength] = newTriangle;
+			triangleStackLength++;
 		} else {
 			//Must decide whether to occlude or be occluded by active triangle.
 			if (newTriangle.depth < activeTriangle->depth) {
@@ -187,35 +250,35 @@ bool manageStack(Edge* thisEdge, Span* thisSpan, unsigned int yScan) {
 				);
 
 				//New triangle occludes old. Create span for old and add new to start of stack.
-				triangleStack.insert(triangleStack.begin(), newTriangle);
+				insert(0u, newTriangle);
 				return true;
 
 			} else {
 				//Add triangle to stack, in order of depth.
 				bool didAddTriangle = false;
-				for (unsigned int index=0u; index<triangleStack.size(); index++) {
+				for (unsigned int index=0u; index<display::MAX_TRIANGLES; index++) {
 					if (triangleStack[index].depth > newTriangle.depth) {
-						triangleStack.insert(std::next(triangleStack.begin(), index), newTriangle);
+						insert(index, newTriangle);
 						didAddTriangle = true;
 						break;
 					}
 				}
 
 				if (!didAddTriangle) {
-					triangleStack.push_back(newTriangle);
+					triangleStack[triangleStackLength++] = newTriangle;
 				}
 			}
 		}
 	} else {
 		//Edge ends a triangle.
 		bool foundTriangle = false;
-		for (unsigned int index=0u; index<triangleStack.size(); index++) {
+		for (unsigned int index=0u; index<display::MAX_TRIANGLES; index++) {
 			TriData thisTri = triangleStack[index];
-			if (thisTri.triIndex == thisEdge->triIndex) {
+			if (static_cast<int>(thisTri.triIndex) == thisEdge->triIndex) {
 				//The same triangle that this edge closes.
 				if (index == 0u) {
 					thisTri.endX = thisEdge->currentX;
-					if ((index+1) < triangleStack.size()) {
+					if ((index+1) < display::MAX_TRIANGLES) {
 						triangleStack[index+1].startX = thisEdge->currentX;
 					}
 					*thisSpan = Span(
@@ -223,7 +286,7 @@ bool manageStack(Edge* thisEdge, Span* thisSpan, unsigned int yScan) {
 					);
 					foundTriangle = true;
 				}
-				triangleStack.erase(std::next(triangleStack.begin(), index));
+				remove(index);
 				break;
 			}
 		}
@@ -233,33 +296,37 @@ bool manageStack(Edge* thisEdge, Span* thisSpan, unsigned int yScan) {
 }
 
 
-
-Vec3 getRandomColour(unsigned int triIndex) {
-	if (triIndex >= rngColourList.size()) {
-		rngColourList.push_back(Vec3(
-			utils::RNGc(), utils::RNGc(), utils::RNGc()
-		));
+unsigned int latestRNG = 0u;
+unsigned short rngColourList[display::MAX_TRIANGLES];
+void createRandomColours() {
+	for (unsigned int index=0u; index<display::MAX_TRIANGLES; index++) {
+		rngColourList[index] = utils::createColour(
+			utils::getRNG(), utils::getRNG(), utils::getRNG()
+		);
 	}
-	return rngColourList[triIndex];
 }
 
 void createSpans(
-		std::array<std::array<Edge*, MAX_EDGES>, LCD_HEIGHT_PX>* edgeAdditions,
-		std::array<std::array<Edge*, MAX_EDGES>, LCD_HEIGHT_PX>* edgeRemovals
+		Edge* (*edgeAdditions)[LCD_HEIGHT_PX][display::MAX_EDGES],
+		Edge* (*edgeRemovals)[LCD_HEIGHT_PX][display::MAX_EDGES],
+		Vec2 (*edgeCounts)[LCD_HEIGHT_PX]
 	) {
-	std::array<Edge*, MAX_EDGES> activeEdgesList; //Active edges, based on the above 2 vectors.
-	for (unsigned int yScan=0u; yScan<LCD_HEIGHT_PX; yScan++) {
-		std::array<Span, LCD_WIDTH_PX> spanStack;
-		triangleStack.clear();
+	unsigned int numActiveEdges = 0u, numSpans = 0u;
+	Edge* activeEdgesList[display::MAX_EDGES]; //Active edges, based on the above 2 vectors.
+	Span spanStack[LCD_WIDTH_PX];
 
+	for (unsigned int yScan=0u; yScan<LCD_HEIGHT_PX; yScan++) {
+		//Not identical to clearing them, but it acts like it did.
+		triangleStackLength = 0u; numSpans = 0u;
 
 		//Add new lines that start on this scanline.
-		for (Edge* thisEdge : edgeAdditions->at(yScan)) {
-			activeEdgesList.push_back(thisEdge);
+		for (unsigned int idx=0u; idx<(*edgeCounts)[yScan].x; idx++) {
+			activeEdgesList[numActiveEdges++] = (*edgeAdditions)[yScan][idx];
 		}
 
 		//Remove lines that stop on this scanline
-		for (Edge* thisEdge : edgeRemovals->at(yScan)) {
+		for (unsigned int idx=0u; idx<(*edgeCounts)[yScan].y; idx++) {
+			Edge* thisEdge = (*edgeRemovals)[idx];
 			auto it = std::find(activeEdgesList.begin(), activeEdgesList.end(), thisEdge);
 			if (it != activeEdgesList.end()) {
 				activeEdgesList.erase(it);
@@ -267,16 +334,12 @@ void createSpans(
 		}
 
 		//Handle the lines?
-		size_t numActiveEdges = activeEdgesList.size();
-		if (numActiveEdges < 1) {continue; /* No active edges for this scanline. */}
+		if (numActiveEdges < 1u) {continue; /* No active edges for this scanline. */}
 
 		for (Edge* thisEdge : activeEdgesList) {
 			thisEdge->calculateYScanValues(yScan);
 			if constexpr (dev::REQUIRES_EDGES) {
-				frameBuffer.setPX(
-					thisEdge->currentX, yScan,
-					((thisEdge->isLeftEdge) ? display::EDGE_COLOUR_L : display::EDGE_COLOUR_R)
-				);
+				utils::drawPixel(thisEdge->currentX, yScan, ((thisEdge->isLeftEdge) ? RGB565::EDGE_COLOUR_L : RGB565::EDGE_COLOUR_R));
 			}
 		}
 		if constexpr (!(dev::DRAW_WIREFRAME)) {
@@ -289,12 +352,12 @@ void createSpans(
 				Span thisSpan;
 				bool success = manageStack(thisEdge, &thisSpan, yScan);
 				if (!success) {continue; /* Tri was not in stack. */}
-				spanStack.push_back(thisSpan);
+				spanStack[numSpans++] = thisSpan;
 			}
 
 
 			for (Span& thisSpan : spanStack) {
-				frameBuffer.drawSpan(thisSpan, getRandomColour(thisSpan.triIndex));
+				utils::drawSpan(thisSpan, rngColourList[thisSpan.triIndex]);
 			}
 		}
 

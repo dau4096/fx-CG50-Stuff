@@ -22,7 +22,9 @@ namespace data {
 
 namespace graphics {
 
-void drawScene(Camera& camera);
+	void createRandomColours();
+
+	void drawScene(Camera& camera);
 
 }
 

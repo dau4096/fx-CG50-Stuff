@@ -32,6 +32,7 @@ namespace display {
 	constexpr unsigned int MAX_TRIANGLES = 1u;
 	constexpr unsigned int MAX_VERTICES = MAX_TRIANGLES * 3u;
 	constexpr unsigned int MAX_EDGES = (MAX_VERTICES >= 1u) ? MAX_VERTICES - 1u : 0u;
+
 }
 
 namespace dev {
@@ -46,78 +47,81 @@ namespace dev {
 }
 
 namespace RGB565 {
-	constexpr unsigned short BLACK = 0x0000;
-	constexpr unsigned short RED = 0xF800;
-	constexpr unsigned short GREEN = 0x07E0; 
-	constexpr unsigned short BLUE = 0x001F;
-	constexpr unsigned short YELLOW = 0xFFE0;
-	constexpr unsigned short MAGENTA = 0xF81F; 
-	constexpr unsigned short CYAN = 0x07FF;
-	constexpr unsigned short WHTE = 0xFFFF;	
+	constexpr unsigned short BLACK = 0x0000u;
+	constexpr unsigned short RED = 0xF800u;
+	constexpr unsigned short GREEN = 0x07E0u;
+	constexpr unsigned short BLUE = 0x001Fu;
+	constexpr unsigned short YELLOW = 0xFFE0u;
+	constexpr unsigned short MAGENTA = 0xF81Fu;
+	constexpr unsigned short CYAN = 0x07FFu;
+	constexpr unsigned short WHTE = 0xFFFFu;
+
+	constexpr unsigned short EDGE_COLOUR_L = 0xFFEFu;
+	constexpr unsigned short EDGE_COLOUR_R = 0x7FFFu;
 }
 
-namespace key {
-	//All keycodes from the FX-CG50 keyboard, for use in utils::isKeyPressed();
-	constexpr int FUNC_1 = 0x070A;
-	constexpr int FUNC_2 = 0x060A;
-	constexpr int FUNC_3 = 0x050A;
-	constexpr int FUNC_4 = 0x040A;
-	constexpr int FUNC_5 = 0x030A;
-	constexpr int FUNC_6 = 0x020A;
 
-	constexpr int SHIFT = 0x0709;
-	constexpr int OPTN = 0x0609;
-	constexpr int VARS = 0x0509;
-	constexpr int MENU = 0x0409;
 
-	constexpr int UP = 0x0209;
-	constexpr int DOWN = 0x0308;
-	constexpr int LEFT = 0x0309;
-	constexpr int RIGHT = 0x0208;
+//All keycodes from the FX-CG50 keyboard, for use in utils::isKeyPressed();
+#define FUNC_1 0x070Au
+#define FUNC_2 0x060Au
+#define FUNC_3 0x050Au
+#define FUNC_4 0x040Au
+#define FUNC_5 0x030Au
+#define FUNC_6 0x020Au
 
-	constexpr int ALPHA = 0x0708;
-	constexpr int SQUARE = 0x0608;
-	constexpr int EXPONENT = 0x0508;
-	constexpr int EXIT = 0x0408;
+#define SHIFT 0x0709u
+#define OPTN 0x0609u
+#define VARS 0x0509u
+#define MENU 0x0409u
 
-	constexpr int X_THETA_T = 0x0707;
-	constexpr int LOGARITHM_10 = 0x0607;
-	constexpr int LOGARITHM_E = 0x0507;
-	constexpr int SINE = 0x0407;
-	constexpr int COSINE = 0x0307;
-	constexpr int TANGENT = 0x0207;
+#define UP 0x0209u
+#define DOWN 0x0308u
+#define LEFT 0x0309u
+#define RIGHT 0x0208u
 
-	constexpr int MIXED_FRACTION = 0x0706;
-	constexpr int STANDARD_TO_DECIMAL = 0x0606;
-	constexpr int OPEN_BRACKET = 0x0506;
-	constexpr int CLOSE_BRACKET = 0x0406;
-	constexpr int COMMA = 0x0306;
-	constexpr int ARROW_RIGHT = 0x0206;
+#define ALPHA 0x0708u
+#define SQUARE 0x0608u
+#define EXPONENT 0x0508u
+#define EXIT 0x0408u
 
-	constexpr int NUM_7 = 0x0705;
-	constexpr int NUM_8 = 0x0605;
-	constexpr int NUM_9 = 0x0505;
-	constexpr int DELETE = 0x0405;
-	constexpr int AC_ON = 0x0101;
+#define X_THETA_T 0x0707u
+#define LOGARITHM_10 0x0607u
+#define LOGARITHM_E 0x0507u
+#define SINE 0x0407u
+#define COSINE 0x0307u
+#define TANGENT 0x0207u
 
-	constexpr int NUM_4 = 0x0704;
-	constexpr int NUM_5 = 0x0604;
-	constexpr int NUM_6 = 0x0504;
-	constexpr int MULTIPLY = 0x0404;
-	constexpr int DIVIDE = 0x0304;
+#define MIXED_FRACTION 0x0706u
+#define STANDARD_TO_DECIMAL 0x0606u
+#define OPEN_BRACKET 0x0506u
+#define CLOSE_BRACKET 0x0406u
+#define COMMA 0x0306u
+#define ARROW_RIGHT 0x0206u
 
-	constexpr int NUM_1 = 0x0703;
-	constexpr int NUM_2 = 0x0603;
-	constexpr int NUM_3 = 0x0503;
-	constexpr int ADD = 0x0403;
-	constexpr int SUBTRACT = 0x0303;
+#define NUM_7 0x0705u
+#define NUM_8 0x0605u
+#define NUM_9 0x0505u
+#define DELETE 0x0405u
+#define AC_ON 0x0101u
 
-	constexpr int NUM_0 = 0x0702;
-	constexpr int DECIMAL_MARKER = 0x0602;
-	constexpr int BASE_10_POWER_X = 0x0502;
-	constexpr int DASH = 0x0402;
-	constexpr int EXECUTE = 0x0302;
-}
+#define NUM_4 0x0704u
+#define NUM_5 0x0604u
+#define NUM_6 0x0504u
+#define MULTIPLY 0x0404u
+#define DIVIDE 0x0304u
+
+#define NUM_1 0x0703u
+#define NUM_2 0x0603u
+#define NUM_3 0x0503u
+#define ADD 0x0403u
+#define SUBTRACT 0x0303u
+
+#define NUM_0 0x0702u
+#define DECIMAL_MARKER 0x0602u
+#define BASE_10_POWER_X 0x0502u
+#define DASH 0x0402u
+#define EXECUTE 0x0302u
 
 
 #endif

@@ -77,16 +77,18 @@ namespace utils {
 
 
 
-	static int printLN = 1;
-	static inline void printTXT(const char* text=(const char*)"", int xPosition=5) {
-		PrintXY(xPosition, printLN, text, 0, 0);
-		printLN = (printLN&0b111) + 1;
+	static unsigned int printLN = 0u;
+	#define MAX_PRINT_LINES 7u
+	static (const char*) printQueue[MAX_PRINT_LINES];
+	inline void printTXT(const char* text=(const char*)"") {
+		printQueue[printLN] = text;
+		printLN = (printLN + 1u) % MAX_PRINT_LINES;
 	}
-	static inline void printINT(int value, int xPosition=5) {
-		PrintXY(xPosition, printLN, (const char*)value, 0, 0);
-		printLN = (printLN&0b111) + 1;
+	inline void printINT(int value) {
+		printQueue[printLN] = (const char*)value;
+		printLN = (printLN + 1u) % MAX_PRINT_LINES;
 	}
-	static inline void printFLOAT(float value, int xPosition=5) {
+	inline void printFLOAT(float value) {
 		int fracScale = 100; //2DP.
 		int whole = static_cast<int>(floor(value));
 		int offset = (abs(whole) < 10) ? 1 : ((abs(whole) < 100) ? 2 : ((abs(whole) < 1000) ? 3 : 4));
@@ -95,14 +97,20 @@ namespace utils {
 		PrintXY(xPosition, printLN, (const char*)whole, 0, 0);
 		PrintXY(xPosition+offset, printLN, (const char*)".", 0, 0);
 		PrintXY(xPosition+offset+1, printLN, (const char*)fractional, 0, 0);
-		printLN = (printLN&0b111) + 1;
+		printLN = (printLN + 1u) % MAX_PRINT_LINES;
 	}
-	static inline void printHEX(unsigned short input, int xPosition=5) {
-		PrintXY(xPosition, printLN, (const char*)static_cast<int>(input), 0, 0);
-		printLN = (printLN&0b111) + 1;
+	inline void printHEX(unsigned short input) {
+		printINT(static_cast<int>(input));
 	}
-	static inline void resetPrintLN() {
-		printLN = 1;
+	inline void resetPrintLN() {
+		printLN = 0u;
+	}
+	inline void printLines() {
+		for (unsigned int ln=0u; ln<printLN) {
+			const char* text = printQueue[ln];
+			PrintXY(5, static_cast<int>(ln+1u), text, 0, 0);
+		}
+		resetPrintLN();
 	}
 
 
