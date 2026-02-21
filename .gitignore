@@ -1,0 +1,4 @@
+#Files to ignore by git;
+*.g3a
+*.bin
+*.o

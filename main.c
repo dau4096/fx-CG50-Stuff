@@ -2,6 +2,11 @@
 #include <fxcg/keyboard.h>
 
 
+//// SRC headers ////
+#include "src/utils.h"
+//// SRC headers ////
+
+
 int main() {
 	Bdisp_AllClr_VRAM();
 

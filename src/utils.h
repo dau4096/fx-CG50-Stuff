@@ -1,128 +1,266 @@
 #ifndef UTILS_H
 #define UTILS_H
-extern "C" {
-	#include "C:\Users\User\Documents\code\.cpp\PrizmSDK-win-0.6\include\fxcg/display.h"
-	#include "C:\Users\User\Documents\code\.cpp\PrizmSDK-win-0.6\include\fxcg/keyboard.h"
-	#include "C:\Users\User\Documents\code\.cpp\PrizmSDK-win-0.6\include\fxcg/rtc.h"
+
+
+#include <fxcg/display.h>
+
+
+#include "trigLUT.h" //Contains the trig L.U.T. for integer degrees 0-90*
+
+
+
+
+//// CONSTANTS ////
+//Maths
+#define EPSILON 1e-5f
+#define PI 3.141597
+
+//Logic
+#define TRUE 1
+#define FALSE 0
+
+//Display stuff
+#define DMA_THRESHOLD 96
+//// CONSTANTS ////
+
+
+
+//// STRUCTS ////
+//2D positions
+typedef struct {float x, y;} Vec2_t;
+static inline Vec2_t createVec2_t(float x, float y) {
+	Vec2_t v;
+	v.x=x; v.y=y;
+	return v;
 }
-#include "structs.h"
-#include "constants.h"
+static inline Vec2_t emptyVec2_t() {return createVec2_t(0.0f, 0.0f);}
 
-
-//Invalids and constants.
-constexpr vec2 INVALID = vec2(0xFFFFFFFF, 0xFFFFFFFF);
-constexpr float sinLUT[360] = {0.0, 0.0175, 0.0349, 0.0523, 0.0698, 0.0872, 0.1045, 0.1219, 0.1392, 0.1564, 0.1736, 0.1908, 0.2079, 0.225, 0.2419, 0.2588, 0.2756, 0.2924, 0.309, 0.3256, 0.342, 0.3584, 0.3746, 0.3907, 0.4067, 0.4226, 0.4384, 0.454, 0.4695, 0.4848, 0.5, 0.515, 0.5299, 0.5446, 0.5592, 0.5736, 0.5878, 0.6018, 0.6157, 0.6293, 0.6428, 0.6561, 0.6691, 0.682, 0.6947, 0.7071, 0.7193, 0.7314, 0.7431, 0.7547, 0.766, 0.7771, 0.788, 0.7986, 0.809, 0.8192, 0.829, 0.8387, 0.848, 0.8572, 0.866, 0.8746, 0.8829, 0.891, 0.8988, 0.9063, 0.9135, 0.9205, 0.9272, 0.9336, 0.9397, 0.9455, 0.9511, 0.9563, 0.9613, 0.9659, 0.9703, 0.9744, 0.9781, 0.9816, 0.9848, 0.9877, 0.9903, 0.9925, 0.9945, 0.9962, 0.9976, 0.9986, 0.9994, 0.9998, 1.0, 0.9998, 0.9994, 0.9986, 0.9976, 0.9962, 0.9945, 0.9925, 0.9903, 0.9877, 0.9848, 0.9816, 0.9781, 0.9744, 0.9703, 0.9659, 0.9613, 0.9563, 0.9511, 0.9455, 0.9397, 0.9336, 0.9272, 0.9205, 0.9135, 0.9063, 0.8988, 0.891, 0.8829, 0.8746, 0.866, 0.8572, 0.848, 0.8387, 0.829, 0.8192, 0.809, 0.7986, 0.788, 0.7771, 0.766, 0.7547, 0.7431, 0.7314, 0.7193, 0.7071, 0.6947, 0.682, 0.6691, 0.6561, 0.6428, 0.6293, 0.6157, 0.6018, 0.5878, 0.5736, 0.5592, 0.5446, 0.5299, 0.515, 0.5, 0.4848, 0.4695, 0.454, 0.4384, 0.4226, 0.4067, 0.3907, 0.3746, 0.3584, 0.342, 0.3256, 0.309, 0.2924, 0.2756, 0.2588, 0.2419, 0.225, 0.2079, 0.1908, 0.1736, 0.1564, 0.1392, 0.1219, 0.1045, 0.0872, 0.0698, 0.0523, 0.0349, 0.0175, 0.0, -0.0175, -0.0349, -0.0523, -0.0698, -0.0872, -0.1045, -0.1219, -0.1392, -0.1564, -0.1736, -0.1908, -0.2079, -0.225, -0.2419, -0.2588, -0.2756, -0.2924, -0.309, -0.3256, -0.342, -0.3584, -0.3746, -0.3907, -0.4067, -0.4226, -0.4384, -0.454, -0.4695, -0.4848, -0.5, -0.515, -0.5299, -0.5446, -0.5592, -0.5736, -0.5878, -0.6018, -0.6157, -0.6293, -0.6428, -0.6561, -0.6691, -0.682, -0.6947, -0.7071, -0.7193, -0.7314, -0.7431, -0.7547, -0.766, -0.7771, -0.788, -0.7986, -0.809, -0.8192, -0.829, -0.8387, -0.848, -0.8572, -0.866, -0.8746, -0.8829, -0.891, -0.8988, -0.9063, -0.9135, -0.9205, -0.9272, -0.9336, -0.9397, -0.9455, -0.9511, -0.9563, -0.9613, -0.9659, -0.9703, -0.9744, -0.9781, -0.9816, -0.9848, -0.9877, -0.9903, -0.9925, -0.9945, -0.9962, -0.9976, -0.9986, -0.9994, -0.9998, -1.0, -0.9998, -0.9994, -0.9986, -0.9976, -0.9962, -0.9945, -0.9925, -0.9903, -0.9877, -0.9848, -0.9816, -0.9781, -0.9744, -0.9703, -0.9659, -0.9613, -0.9563, -0.9511, -0.9455, -0.9397, -0.9336, -0.9272, -0.9205, -0.9135, -0.9063, -0.8988, -0.891, -0.8829, -0.8746, -0.866, -0.8572, -0.848, -0.8387, -0.829, -0.8192, -0.809, -0.7986, -0.788, -0.7771, -0.766, -0.7547, -0.7431, -0.7314, -0.7193, -0.7071, -0.6947, -0.682, -0.6691, -0.6561, -0.6428, -0.6293, -0.6157, -0.6018, -0.5878, -0.5736, -0.5592, -0.5446, -0.5299, -0.515, -0.5, -0.4848, -0.4695, -0.454, -0.4384, -0.4226, -0.4067, -0.3907, -0.3746, -0.3584, -0.342, -0.3256, -0.309, -0.2924, -0.2756, -0.2588, -0.2419, -0.225, -0.2079, -0.1908, -0.1736, -0.1564, -0.1392, -0.1219, -0.1045, -0.0872, -0.0698, -0.0523, -0.0349, -0.0175};
-constexpr float cosLUT[360] = {1.0, 0.9998, 0.9994, 0.9986, 0.9976, 0.9962, 0.9945, 0.9925, 0.9903, 0.9877, 0.9848, 0.9816, 0.9781, 0.9744, 0.9703, 0.9659, 0.9613, 0.9563, 0.9511, 0.9455, 0.9397, 0.9336, 0.9272, 0.9205, 0.9135, 0.9063, 0.8988, 0.891, 0.8829, 0.8746, 0.866, 0.8572, 0.848, 0.8387, 0.829, 0.8192, 0.809, 0.7986, 0.788, 0.7771, 0.766, 0.7547, 0.7431, 0.7314, 0.7193, 0.7071, 0.6947, 0.682, 0.6691, 0.6561, 0.6428, 0.6293, 0.6157, 0.6018, 0.5878, 0.5736, 0.5592, 0.5446, 0.5299, 0.515, 0.5, 0.4848, 0.4695, 0.454, 0.4384, 0.4226, 0.4067, 0.3907, 0.3746, 0.3584, 0.342, 0.3256, 0.309, 0.2924, 0.2756, 0.2588, 0.2419, 0.225, 0.2079, 0.1908, 0.1736, 0.1564, 0.1392, 0.1219, 0.1045, 0.0872, 0.0698, 0.0523, 0.0349, 0.0175, 0.0, -0.0175, -0.0349, -0.0523, -0.0698, -0.0872, -0.1045, -0.1219, -0.1392, -0.1564, -0.1736, -0.1908, -0.2079, -0.225, -0.2419, -0.2588, -0.2756, -0.2924, -0.309, -0.3256, -0.342, -0.3584, -0.3746, -0.3907, -0.4067, -0.4226, -0.4384, -0.454, -0.4695, -0.4848, -0.5, -0.515, -0.5299, -0.5446, -0.5592, -0.5736, -0.5878, -0.6018, -0.6157, -0.6293, -0.6428, -0.6561, -0.6691, -0.682, -0.6947, -0.7071, -0.7193, -0.7314, -0.7431, -0.7547, -0.766, -0.7771, -0.788, -0.7986, -0.809, -0.8192, -0.829, -0.8387, -0.848, -0.8572, -0.866, -0.8746, -0.8829, -0.891, -0.8988, -0.9063, -0.9135, -0.9205, -0.9272, -0.9336, -0.9397, -0.9455, -0.9511, -0.9563, -0.9613, -0.9659, -0.9703, -0.9744, -0.9781, -0.9816, -0.9848, -0.9877, -0.9903, -0.9925, -0.9945, -0.9962, -0.9976, -0.9986, -0.9994, -0.9998, -1.0, -0.9998, -0.9994, -0.9986, -0.9976, -0.9962, -0.9945, -0.9925, -0.9903, -0.9877, -0.9848, -0.9816, -0.9781, -0.9744, -0.9703, -0.9659, -0.9613, -0.9563, -0.9511, -0.9455, -0.9397, -0.9336, -0.9272, -0.9205, -0.9135, -0.9063, -0.8988, -0.891, -0.8829, -0.8746, -0.866, -0.8572, -0.848, -0.8387, -0.829, -0.8192, -0.809, -0.7986, -0.788, -0.7771, -0.766, -0.7547, -0.7431, -0.7314, -0.7193, -0.7071, -0.6947, -0.682, -0.6691, -0.6561, -0.6428, -0.6293, -0.6157, -0.6018, -0.5878, -0.5736, -0.5592, -0.5446, -0.5299, -0.515, -0.5, -0.4848, -0.4695, -0.454, -0.4384, -0.4226, -0.4067, -0.3907, -0.3746, -0.3584, -0.342, -0.3256, -0.309, -0.2924, -0.2756, -0.2588, -0.2419, -0.225, -0.2079, -0.1908, -0.1736, -0.1564, -0.1392, -0.1219, -0.1045, -0.0872, -0.0698, -0.0523, -0.0349, -0.0175, -0.0, 0.0175, 0.0349, 0.0523, 0.0698, 0.0872, 0.1045, 0.1219, 0.1392, 0.1564, 0.1736, 0.1908, 0.2079, 0.225, 0.2419, 0.2588, 0.2756, 0.2924, 0.309, 0.3256, 0.342, 0.3584, 0.3746, 0.3907, 0.4067, 0.4226, 0.4384, 0.454, 0.4695, 0.4848, 0.5, 0.515, 0.5299, 0.5446, 0.5592, 0.5736, 0.5878, 0.6018, 0.6157, 0.6293, 0.6428, 0.6561, 0.6691, 0.682, 0.6947, 0.7071, 0.7193, 0.7314, 0.7431, 0.7547, 0.766, 0.7771, 0.788, 0.7986, 0.809, 0.8192, 0.829, 0.8387, 0.848, 0.8572, 0.866, 0.8746, 0.8829, 0.891, 0.8988, 0.9063, 0.9135, 0.9205, 0.9272, 0.9336, 0.9397, 0.9455, 0.9511, 0.9563, 0.9613, 0.9659, 0.9703, 0.9744, 0.9781, 0.9816, 0.9848, 0.9877, 0.9903, 0.9925, 0.9945, 0.9962, 0.9976, 0.9986, 0.9994, 0.9998};
-
-
-
-//Utility functions
-namespace utils {
-
-	//CASIO SDK Colour stuff;
-	static inline unsigned short createColour(unsigned char r, unsigned char g, unsigned char b) {
-		return ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
-	}
-	static inline vec3 reverseColour(unsigned short colourRGB565) {
-		return vec3(
-			(colourRGB565 & 0xF800) >> 8, //First 5 bits
-			(colourRGB565 & 0x07E0) >> 3, //Next 6 bits
-			(colourRGB565 & 0x001F) // (>> 0); //Last 5 bits
-		);
-	}
-	static inline void drawPixel(int xPosition, int yPosition, unsigned short colour) {
-		int newY = yPosition + display::MENU_HEIGHT;
-		if (xPosition >= 0 && xPosition < LCD_WIDTH_PX && newY >= 0 && newY < LCD_HEIGHT_PX) {
-			Bdisp_SetPoint_VRAM(xPosition, newY, colour);
-		}
-	}
-
-
-
-
-
-	//Maths and Trig
-	float sqrtApprox(float value); //Uses newton-raphson for an estimate of the square root.
-	static inline float min(float A, float B) {return (A<B) ? A : B;}
-	static inline float max(float A, float B) {return (A>B) ? A : B;}
-	static inline float clamp(float value, float minV, float maxV) {return (value < maxV) ? ((value > minV) ? value : minV) : maxV;}
-	static inline float abs(float value) {return (value<0) ? -value : value;}
-	static inline float floor(float value) {return static_cast<float>((value >= 0) ? static_cast<int>(value) : static_cast<int>(value) - (value != static_cast<int>(value)));}
-	static inline float ceil(float value) {return static_cast<float>((value <= 0) ? static_cast<int>(value) : static_cast<int>(value) + (value != static_cast<int>(value)));}
-	static inline float fract(float value) {return (value>0) ? (value - floor(value)) : (ceil(value) - value);}
-	static float sin(float angle) {return sinLUT[static_cast<int>(abs(floor(angle))) % 360];}
-	static float cos(float angle) {return cosLUT[static_cast<int>(abs(floor(angle))) % 360];}
-
-
-	//Vector struct operations
-	//vec2;
-	static inline vec2 ADD2(vec2 A, vec2 B) {return vec2(A.x+B.x, A.y+B.y);}
-	static inline vec2 SUB2(vec2 A, vec2 B) {return vec2(A.x-B.x, A.y-B.y);}
-	static inline vec2 MUL2(vec2 A, float scalar) {return vec2(A.x*scalar, A.y*scalar);}
-	static inline vec2 DIV2(vec2 A, float scalar) {return vec2(A.x/scalar, A.y/scalar);}
-	float LENGTH2(vec2 vector); //Uses sqrtApprox()
-	vec2 NORM2(vec2 vector); //Uses LENGTH2()
-	static inline vec2 ABS2(vec2 A) {return vec2(abs(A.x), abs(A.y));}
-	static inline float DOT2(vec2 A, vec2 B) {return A.x*B.x + A.y*B.y;}
-	static inline float DET2(vec2 A, vec2 B) {return A.x*B.y - A.y*B.x;}
-	static inline bool EQU2(vec2 A, vec2 B) {return (((A.x-B.x)<EPSILON) && ((A.y-B.y)<EPSILON));}
-
-	//vec3;
-	static inline vec3 ADD3(vec3 A, vec3 B) {return vec3(A.x+B.x, A.y+B.y, A.z+B.z);}
-	static inline vec3 SUB3(vec3 A, vec3 B) {return vec3(A.x-B.x, A.y-B.y, A.z-B.z);}
-	static inline vec3 MUL3(vec3 A, float scalar) {return vec3(A.x*scalar, A.y*scalar, A.z*scalar);}
-	static inline vec3 DIV3(vec3 A, float scalar) {return vec3(A.x/scalar, A.y/scalar, A.z/scalar);}
-	float LENGTH3(vec3 vector); //Uses sqrtApprox()
-	vec3 NORM3(vec3 vector); //Uses LENGTH3()
-	static inline vec3 ABS3(vec3 A) {return vec3(abs(A.x), abs(A.y), abs(A.z));}
-	static inline float DOT2(vec3 A, vec3 B) {return A.x*B.x + A.y*B.y + A.z*B.z;}
-	static inline bool EQU3(vec3 A, vec3 B) {return (((A.x-B.x)<EPSILON) && ((A.y-B.y)<EPSILON) && ((A.z-B.z)<EPSILON));}
-
-
-	static int printLN = 1;
-	static inline void printTXT(const char* text=(const char*)"", int xPosition=5) {
-		PrintXY(xPosition, printLN, text, 0, 0);
-		printLN = (printLN&0b111) + 1;
-	}
-	static inline void printINT(int value, int xPosition=5) {
-		PrintXY(xPosition, printLN, (const char*)value, 0, 0);
-		printLN = (printLN&0b111) + 1;
-	}
-	static inline void printFLOAT(float value, int xPosition=5) {
-		int fracScale = 100; //2DP.
-		int whole = static_cast<int>(floor(value));
-		int offset = (abs(whole) < 10) ? 1 : ((abs(whole) < 100) ? 2 : ((abs(whole) < 1000) ? 3 : 4));
-		if (whole < 0) offset += 1; //Space for negative sign.
-		int fractional = static_cast<int>(floor((value - whole) * fracScale));
-		PrintXY(xPosition, printLN, (const char*)whole, 0, 0);
-		PrintXY(xPosition+offset, printLN, (const char*)".", 0, 0);
-		PrintXY(xPosition+offset+1, printLN, (const char*)fractional, 0, 0);
-		printLN = (printLN&0b111) + 1;
-	}
-	static inline void printHEX(unsigned short input, int xPosition=5) {
-		PrintXY(xPosition, printLN, (const char*)static_cast<int>(input), 0, 0);
-		printLN = (printLN&0b111) + 1;
-	}
-	static inline void resetPrintLN() {
-		printLN = 1;
-	}
-
-
-	int getRNG(); //Uses set RNGtable of 256 unsigned chars.
-	void clearRNG();
-
-
-	//Keypress functions
-	void keyUpdate(); //Call every frame.
-	bool isKeyPressed(int basicKeycode); //Pass in SDK Enum and returns bool. Non-blocking.
-
-	
-	static inline float fmod(float numerator, float divisor) {
-		if (divisor == 0.0f) return 0.0f;
-		int divis = static_cast<int>(numerator / divisor);
-		return numerator - (divisor * divis);
-	}	
-	int randomInRange(int min, int max);
+//3D positions
+typedef struct {float x, y, z;} Vec3_t;
+static inline Vec3_t createVec3_t(float x, float y, float z) {
+	Vec3_t v;
+	v.x=x; v.y=y; v.z=z;
+	return v;
 }
+static inline Vec3_t emptyVec3_t() {return createVec3_t(0.0f, 0.0f, 0.0f);}
+//// STRUCTS ////
+
+
+
+
+//// GENERAL MATHS ////
+//Fast inverse square root (Quake III Arena), but with added inline directive and renamed to f_invsqrt to fit naming scheme.
+inline float f_invsqrt( float number )
+{
+	int32_t i;
+	float x2, y;
+	const float threehalfs = 1.5F;
+
+	x2 = number * 0.5F;
+	y  = number;
+	i  = * ( int32_t * ) &y;                       // evil floating point bit level hacking
+	i  = 0x5f3759df - ( i >> 1 );               // what the fuck?
+	y  = * ( float * ) &i;
+	y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
+//	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+
+	return y;
+}
+
+
+//Inlined because they're so simplistic.
+//Int funcs
+static inline int i_abs(int v) {return (v>0.0f) ? v : -v;}
+static inline int i_min(int a, int b) {return (a<b) ? a : b;}
+static inline int i_max(int a, int b) {return (a>b) ? a : b;}
+static inline int i_clamp(int v, int mi, int ma) {return i_max(mi, i_min(v, ma));}
+static inline int i_sign(int v) {return (v>0.0f) - (v<0.0f); /* Using strange C-"bool" maths. 1 if >0, 0 if =0, -1 if <0. */}
+
+//Float funcs
+static inline float i_abs(float v) {return (v>0.0f) ? v : -v;}
+static inline float f_min(float a, float b) {return (a<b) ? a : b;}
+static inline float f_max(float a, float b) {return (a>b) ? a : b;}
+static inline float f_clamp(float v, float mi, float ma) {return f_max(mi, f_min(v, ma));}
+static inline int i_sign(float v) {return (v>0.0f) - (v<0.0f); /* Using strange C-"bool" maths. 1 if >0, 0 if =0, -1 if <0. */}
+static inline float f_floor(float v) {
+	int i = (int)(v);
+	return ((v < 0.0f) && (v != (float)(i))) ? (float)(i - 1) : (float)i;
+}
+static inline float f_ceil(float v) {
+	int i = (int)(v);
+	return ((v > 0.0f) && (v != (float)(i))) ? (float)(i + 1) : (float)i;
+}
+static inline float f_round(float v) {return f_floor(v + 0.5f);}
+static inline float f_fract(float v) {return v - f_floor(v);}
+static inline float f_sqrt(float v) {
+	if (v < EPSILON) {return 0.0f; /* No 0/negative values. */}
+	return v * f_invsqrt(v); //x * x^-½ = x^½. It works out. Still looks a bit odd though.
+}
+
+
+//Linear interps
+static inline float f_lerp(float a, float b, float t) {return a + t*(b-a);}
+static Vec2_t v2_lerp(Vec2_t a, Vec2_t b, float t) {
+	return createVec2_t(
+		f_lerp(a.x, b.x, t), f_lerp(a.y, b.y, t)
+	);
+}
+static Vec3_t v3_lerp(Vec3_t a, Vec3_t b, float t) {
+	return createVec3_t(
+		f_lerp(a.x, b.x, t), f_lerp(a.y, b.y, t), f_lerp(a.z, b.z, t)
+	);
+}
+
+
+//Trig : Works in degrees.
+static float i_sin(int angle) {
+	//Wrap angle to [0, 360)
+	int a = angle % 360;
+	if (a < 0) {a += 360;}
+
+	int quad = a / 90;  //[0-3]
+	int idx  = a % 90;  //[0-89] deg
+
+	//If quad is odd, use mirrored index
+	int lut_index = idx ^ ((quad & 1) ? 89 : 0);
+
+	//negative if (quad >= 2)
+	int sign = ((quad & 2) ? -1 : 1);
+	return sign * sin_LUT[lut_index]; //read table for this sin value
+}
+static float i_cos(int angle)   {return i_sin(angle + 90);}
+static float f_sin(float angle) { return i_sin((int)f_round(angle)); }
+static float f_cos(float angle) { return i_cos((int)f_round(angle)); }
+//// GENERAL MATHS ////
+
+
+
+
+//// Vec2_t MATHS ////
+static Vec2_t v2_add(Vec2_t a, Vec2_t b) {return createVec2_t(a.x+b.x, a.y+b.y);}
+static Vec2_t v2_sub(Vec2_t a, Vec2_t b) {return createVec2_t(a.x-b.x, a.y-b.y);}
+static Vec2_t v2_mul(Vec2_t a, float b) {return createVec2_t(a.x*b, a.y*b);}
+static Vec2_t v2_div(Vec2_t a, float b) {
+	if (f_abs(b) < EPSILON) {return emptyVec2_t();}
+	return createVec2_t(a.x/b, a.y/b);
+}
+static float v2_dot(Vec2_t a, Vec2_t b) {return (a.x*b.x) + (a.y*b.y);}
+static float v2_lenSQ(Vec2_t v) {return v2_dot(v, v);}
+static float v2_len(Vec2_t v) {
+	float l = v2_lenSQ(v);
+	if (f_abs(l) < EPSILON) {return 0.0f;}
+	return l * f_invsqrt(l); //x * x^-½ = x^½. It works out. Still looks a bit odd though.
+}
+static Vec2_t v2_normalise(Vec2_t v) {
+	float l = v2_len(v);
+	if (f_abs(l) < EPSILON) {return emptyVec2_t();}
+	return v2_div(v, l);
+}
+static float v2_distance(Vec2_t a, Vec2_t b) {return v2_len(v2_sub(a, b));}
+static Vec2_t v2_normalVec(Vec2_t v) {return createVec2_t(-v.y, v.x); /* Always the same direction, doesn't matter for this use-case. */}
+//// Vec2_t MATHS ////
+
+
+
+
+//// Vec3_t MATHS ////
+static Vec3_t v3_add(Vec3_t a, Vec3_t b) {return createVec3_t(a.x+b.x, a.y+b.y, a.z+b.z);}
+static Vec3_t v3_sub(Vec3_t a, Vec3_t b) {return createVec3_t(a.x-b.x, a.y-b.y, a.z-b.z);}
+static Vec3_t v3_mul(Vec3_t a, float b) {return createVec3_t(a.x*b, a.y*b, a.z*b);}
+static Vec3_t v3_div(Vec3_t a, float b) {
+	if (f_abs(b) < EPSILON) {return emptyVec3_t();}
+	return createVec3_t(a.x/b, a.y/b, a.z/b);
+}
+static float v3_dot(Vec3_t a, Vec3_t b) {
+	return (a.x*b.x) + (a.y*b.y) + (a.z*b.z);
+}
+static float v3_lenSQ(Vec3_t v) {return v3_dot(v, v);}
+static float v3_len(Vec3_t v) {
+	float l = v3_lenSQ(v);
+	if (f_abs(l) < EPSILON) {return 0.0f;}
+	return l * f_invsqrt(l); //x * x^-½ = x^½. It works out. Still looks a bit odd though.
+}
+static Vec3_t v3_normalise(Vec3_t v) {
+	float l = v3_len(v);
+	if (f_abs(l) < EPSILON) {return emptyVec3_t();}
+	return v3_div(v, l);
+}
+static float v3_distance(Vec3_t a, Vec3_t b) {return v3_len(v3_sub(a, b));}
+//// Vec3_t MATHS ////
+
+
+
+
+//// DISPLAY GENERIC ////
+static color_t toRGB565(Vec3_t colourRGB) {
+	return (
+		(((int)(colourRGB.x) & 0xF8) << 8) | //R (5b)
+		(((int)(colourRGB.y) & 0xFC) << 3) | //G (6b)
+		(((int)(colourRGB.z) & 0xF8) >> 3)   //B (5b)
+	);
+}
+
+
+static void clearDisplay(color_t fill) {Bdisp_Fill_VRAM(fill, 3);}
+
+static inline int drawPixel(Vec2_t position, color_t colour) {
+	//Returns success/fail.
+	color_t* VRAM = (color_t*)GetVRAMAddress(); //Get VRAM start
+	unsigned int index = ((unsigned int)(position.y) * LCD_WIDTH_PX) + (unsigned int)(position.x);
+	if (index >= LCD_WIDTH_PX*LCD_HEIGHT_PX) {return FALSE;}
+	*(VRAM+index) = colour;
+	return TRUE;
+}
+
+
+static int drawHorizontalLine(Vec2_t start, int length, color_t colour) {
+	if (length == 0) {return FALSE;}
+	int x0 = (int)start.x; int y = (int)start.y;
+
+	//return if row outside screen
+	if ((y < 0) || (y >= LCD_HEIGHT_PX)) {return FALSE;}
+
+	//negative length must be accounted for
+	if (length < 0) {
+		x0 += length;
+		length = -length;
+	}
+
+	//Clamp to screen width
+	int x1 = f_min(x0 + length, LCD_WIDTH_PX);
+	if (x0 < 0) x0 = 0;
+	if (x0 >= x1) {return FALSE;}
+
+	unsigned int index = y * LCD_WIDTH_PX + x0;
+	if (length > DMA_THRESHOLD) {
+		//Long enough that using DMA is quicker.
+		startDMATransfer(VRAM + index, colour, length);
+	} else {
+		//Not long enough, just use normal method.
+		for (int i=0; i<length; i++) {VRAM[index + i] = colour;}
+	}
+
+	return TRUE;
+}
+
+
+static int drawVerticalLine(Vec2_t start, int length, color_t colour) {
+	if (length == 0) {return FALSE;}
+	color_t* VRAM = (color_t*)GetVRAMAddress(); //Get VRAM start
+
+	int y = (int)(start.y);
+	int endY = y + length; //Length can be negative to go upward. Assumes down by default.
+	int iLo = f_min((int)start.y, endY); int iHi = f_max((int)start.y, endY);
+	int count = iHi - iLo + 1;
+
+	color_t* ptr = VRAM + (iLo*LCD_WIDTH) + (int)(start.x);
+	for (int i=0; i<count; i++) {
+	    *ptr = colour;
+	    ptr += LCD_WIDTH;
+	}
+	return TRUE;
+}
+//// DISPLAY GENERIC ////
+
 
 #endif

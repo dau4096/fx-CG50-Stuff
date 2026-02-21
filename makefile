@@ -6,11 +6,7 @@ LKR=$(HOME)/libfxcg/toolchain/prizm.x
 all: prgm.g3a
 
 prgm.bin: main.o
-	$(CC) main.o \
-	-L$(HOME)/libfxcg/lib -lfxcg \
-	-T $(LKR) \
-	-nostdlib -nostartfiles \
-	-o prgm.bin
+	$(CC) main.o -L$(HOME)/libfxcg/lib -lfxcg -T $(LKR) -nostdlib -nostartfiles -o prgm.bin
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c main.c -o main.o
