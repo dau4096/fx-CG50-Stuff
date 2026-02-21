@@ -1,18 +1,26 @@
 CC=/usr/local/cross/bin/sh3eb-elf-gcc
-CFLAGS=-I$(HOME)/libfxcg/include -O2 -Wall -fno-lto
+CFLAGS=-I$(HOME)/libfxcg/include -I./ -I./src -O2 -Wall -fno-lto
 LDFLAGS=-L$(HOME)/libfxcg/lib -lfxcg
 LKR=$(HOME)/libfxcg/toolchain/prizm.x
 
+#All src files
+SRCS = main.c src/graphics.c
+#Convert src file paths to *.o file paths
+OBJS = $(SRCS:.c=.o)
+
 all: prgm.g3a
 
-prgm.bin: main.o
-	$(CC) main.o -L$(HOME)/libfxcg/lib -lfxcg -T $(LKR) -nostdlib -nostartfiles -o prgm.bin
+#Link .o files
+prgm.bin: $(OBJS)
+	$(CC) $(OBJS) -L$(HOME)/libfxcg/lib -lfxcg -lgcc -T $(LKR) -nostdlib -nostartfiles -o prgm.bin
 
-main.o: main.c
-	$(CC) $(CFLAGS) -c main.c -o main.o
+#Compile any .c to .o
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
+#Convert .bin → .g3a
 prgm.g3a: prgm.bin
 	mkg3a prgm.bin
 
 clean:
-	rm -f *.o *.bin *.g3a
+	rm -f $(OBJS) *.bin *.g3a
