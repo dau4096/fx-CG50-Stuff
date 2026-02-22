@@ -2,7 +2,7 @@
 #define GRAPHICS_H
 
 
-#include "utils.h"
+#include "shared.h" //Constants & Structs
 
 
 void g_drawFrame(Camera_t* camera, Wall_t* walls);

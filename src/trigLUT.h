@@ -1,5 +1,4 @@
-#ifndef TRIGLUT_H
-#define TRIGLUT_H
+#pragma once
 
 
 //90 integer degree steps, through sine.
@@ -15,5 +14,3 @@ static const float sin_LUT[90] = {
 	0.984808f,	0.987688f,	0.990268f,	0.992546f,	0.994522f,	0.996195f,	0.997564f,	0.998630f,	0.999391f,	0.999848f
 };
 
-
-#endif
