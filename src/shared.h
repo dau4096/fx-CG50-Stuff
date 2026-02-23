@@ -42,18 +42,19 @@ inline Vec3_t emptyVec3_t() {return createVec3_t(0.0f, 0.0f, 0.0f);}
 
 
 typedef struct {
-	Vec2_t start, dir, end;
-	float length;
+	Vec2_t start, end; //Start/end 2d pos
+	Vec2_t dir; //Normalised dir
+	float length; //Length
 } Line_t;
 
 typedef struct {
-	Vec2_t start, end;
-	Vec3_t colour;
-	int valid;
+	Vec3_t start, end; //Start/end positions
+	Vec3_t colour; //RGB colour
+	int valid; //Bool validity
 } Wall_t;
 
 typedef struct {
-	Vec2_t position; //2D Position
+	Vec3_t position; //3D Position
 	int yaw; //View yaw angle
 	int FOV; //Field of view, Degrees
 	float maxDistance; //Maximum view distance

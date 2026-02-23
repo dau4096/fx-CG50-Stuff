@@ -50,8 +50,8 @@ float f_cos(float angle);
 //// Vec2_t MATHS ////
 Vec2_t v2_add(Vec2_t a, Vec2_t b); 		// +
 Vec2_t v2_sub(Vec2_t a, Vec2_t b); 		// -
-Vec2_t v2_mul(Vec2_t a, float b);  		// ·
-Vec2_t v2_div(Vec2_t a, float b);  		// /
+Vec2_t v2_mul(Vec2_t a, float b);  		// ×
+Vec2_t v2_div(Vec2_t a, float b);  		// ÷
 float v2_dot(Vec2_t a, Vec2_t b);  		// •
 float v2_lenSQ(Vec2_t v);          		//Returns length^2
 float v2_len(Vec2_t v);            		//Includes sqrt [^]
@@ -68,13 +68,14 @@ Vec2_t v2_max(Vec2_t a, Vec2_t b);		//Max of X/Y
 //// Vec3_t MATHS ////
 Vec3_t v3_add(Vec3_t a, Vec3_t b);		// +
 Vec3_t v3_sub(Vec3_t a, Vec3_t b);		// -
-Vec3_t v3_mul(Vec3_t a, float b);		// ·
-Vec3_t v3_div(Vec3_t a, float b);		// /
+Vec3_t v3_mul(Vec3_t a, float b);		// ×
+Vec3_t v3_div(Vec3_t a, float b);		// ÷
 float v3_dot(Vec3_t a, Vec3_t b);		// •
 float v3_lenSQ(Vec3_t v);				//Returns length^2
 float v3_len(Vec3_t v);					//Includes sqrt [^]
 Vec3_t v3_normalise(Vec3_t v);			//Returns normalised v_hat
 float v3_distance(Vec3_t a, Vec3_t b);	//Distance between 2 points
+Vec3_t v3_normalVec(Vec3_t v);			//Simplistic 2D normal, passes Z through.
 Vec3_t v3_min(Vec3_t a, Vec3_t b);		//Min of X/Y
 Vec3_t v3_max(Vec3_t a, Vec3_t b);		//Max of X/Y
 //// Vec3_t MATHS ////
@@ -92,6 +93,7 @@ Vec3_t v3_fromV2_alt(Vec2_t v2, float s);
 
 //// MISC ////
 Line_t l_ray(Vec2_t start, Vec2_t dir, float len); //Create "ray"
+Wall_t w_create(Vec3_t start, Vec3_t end, Vec3_t colour); //Create wall from given data.
 //// MISC ////
 
 

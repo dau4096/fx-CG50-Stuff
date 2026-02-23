@@ -155,6 +155,7 @@ Vec3_t v3_normalise(Vec3_t v) {
 	return v3_div(v, l);
 }
 float v3_distance(Vec3_t a, Vec3_t b) {return v3_len(v3_sub(a, b));}
+Vec3_t v3_normalVec(Vec3_t v) {return createVec3_t(-v.y, v.x, v.z); /* In 2D, acts like v2_normalVec but with added Z. */}
 Vec3_t v3_min(Vec3_t a, Vec3_t b) {return createVec3_t(f_min(a.x, b.x), f_min(a.y, b.y), f_min(a.z, b.z));}
 Vec3_t v3_max(Vec3_t a, Vec3_t b) {return createVec3_t(f_max(a.x, b.x), f_max(a.y, b.y), f_max(a.z, b.z));}
 //// Vec3_t MATHS ////
@@ -180,6 +181,17 @@ Line_t l_ray(Vec2_t start, Vec2_t dir, float len) {
 	ln.length = len;
 	ln.dir = dir;
 	return ln;
+}
+
+Wall_t w_create(
+	Vec3_t start, Vec3_t end, Vec3_t colour
+) {
+	Wall_t wall;
+	wall.valid = TRUE;
+	wall.start = start;
+	wall.end = end;
+	wall.colour = colour;
+	return wall;
 }
 //// MISC ////
 
@@ -299,7 +311,7 @@ static unsigned char lnIdx = 0u;
 void d_printBuf(char* buf) {
 	int x = 1; //1px from the left
 	lnIdx = (lnIdx+1) % MAX_PRINT_LINES;
-	PrintXY(x, lnIdx++, buf, TEXT_MODE_NORMAL, TEXT_COLOR_BLACK);
+	PrintXY(x, lnIdx, buf, TEXT_MODE_NORMAL, TEXT_COLOR_BLACK);
 }
 
 //Prints int at some given position
