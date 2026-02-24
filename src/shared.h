@@ -10,6 +10,9 @@
 //Maths
 #define EPSILON 1e-5f
 #define PI 3.141597
+#define SINE_LUT_SIZE 90
+#define ATAN_LUT_BITS 6
+#define ATAN_LUT_SIZE 64
 
 //Logic
 #define TRUE 1

@@ -80,8 +80,8 @@ float i_sin(int angle) {
 	int a = angle % 360;
 	if (a < 0) {a += 360;}
 
-	int quad = a / 90; //[0-3] quadrant
-	int idx  = a % 90; //[0-89] angle
+	int quad = a / SINE_LUT_SIZE; //[0-3] quadrant
+	int idx  = a % SINE_LUT_SIZE; //[0-89] angle
 
 
 	int lut_index;
@@ -98,6 +98,33 @@ float i_sin(int angle) {
 float i_cos(int angle)   {return i_sin(angle + 90);}
 float f_sin(float angle) {return i_sin((int)f_round(angle));}
 float f_cos(float angle) {return i_cos((int)f_round(angle));}
+
+int f_atan2_int(int y, int x) {
+	//Find atan2(y,x) in int degrees.
+	int absY = abs(y);
+	int absX = abs(x);
+
+	if ((absX == 0) && (absY == 0)) {return 0;}
+
+	//Find value in Look-Up-Table
+	int angle;
+	if (absX > absY) {
+		//Read directly
+		int idx = (absY << ATAN_LUT_BITS) / absX;
+		if (idx >= ATAN_LUT_SIZE) idx = ATAN_LUT_SIZE - 1;
+		angle = atan_LUT[idx];
+	} else {
+		//Read and modify value (not first 45 deg)
+		int idx = (absX << ATAN_LUT_BITS) / absY;
+		if (idx >= ATAN_LUT_SIZE) idx = ATAN_LUT_SIZE - 1;
+		angle = 90 - atan_LUT[idx];
+	}
+
+	if ((x >= 0) && (y >= 0)) {return angle;}
+	else if ((x < 0) && (y >= 0)) {return 180 - angle;}
+	else if ((x < 0) && (y < 0)) {return 180 + angle;}
+	else {return 360 - angle;}
+}
 //// GENERAL MATHS ////
 
 

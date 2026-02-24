@@ -7,6 +7,29 @@
 //// SRC headers ////
 
 
+
+static unsigned char depthBuffer[LCD_WIDTH_PX];
+unsigned char g_mapDepth(float depthF, float maxDepth) {
+	return (unsigned char)((depthF / maxDepth) * 255.0f);
+}
+
+
+int g_getCentreX(Vec2_t position, Camera_t* camera) {
+	Vec2_t direction = v2_normalise(position - v2_fromV3(camera->position));
+	int theta = f_atan2_int(direction.x, direction.y); //Integer atan2 with LUT.
+	int angleDelta = theta - camera->viewAngle;
+	if (angleDelta > 180) {angleDelta -= 360;}
+	if (angleDelta < -180) {angleDelta += 360;}
+	int centreX = (
+		(LCD_WIDTH_PX / 2) * ((angleDelta * 2 / camera->fov) + 1)
+	);
+	return centreX;
+}
+
+
+/*
+//Raycasting logic, Not relevant anymore.
+//Keeping for near-future reference.
 int g_getWallIntersect(Line_t* thisRay, Wall_t* thisWall, Vec2_t* intersectPoint) {
 	Vec2_t start = v2_fromV3(thisWall->start);
 	Vec2_t end   = v2_fromV3(thisWall->end);
@@ -82,7 +105,7 @@ void g_drawWall(
 
 	Vec2_t intersectPoint;
 	int hit = g_getWallIntersect(thisRay, thisWall, &intersectPoint);
-	if (!hit) {return; /* No hit. */}
+	if (!hit) {return; /* No hit. /}
 
 	//Was hit, draw.
 	float distance = f_max(v2_distance(thisRay->start, intersectPoint) * xMult, 0.1f); //Stop the height getting too absurd.
@@ -105,6 +128,120 @@ void g_drawWall(
 	color_t colour = v3_toRGB565(v3_mul(thisWall->colour, cMult));
 	d_drawVerticalLine(screenPos, height, colour);
 }
+*/
+
+
+
+void g_getWallProjections(
+	Wall_t* thisWall, float cameraZ, float invDistance,
+	int* screenYLow, int* screenYTop
+) {
+	//Seems to render weirdly. z=1.0f camera is inline with z=0.0f wall somehow?
+
+	//Wall's start projection
+	float projectedYStart = (cameraZ - thisWall->start.z) * invDistance;
+	int yStart = (int)(LCD_HEIGHT_PX * (0.5f - projectedYStart));
+
+	//Wall's end projection
+	float projectedYEnd = (cameraZ - thisWall->end.z) * invDistance;
+	int yEnd = (int)(LCD_HEIGHT_PX * (0.5f - projectedYEnd));
+
+	if (yStart < yEnd) {
+		*screenYLow = yStart;
+		*screenYTop = yEnd;
+	} else {
+		*screenYLow = yEnd;
+		*screenYTop = yStart;
+	}
+}
+
+
+void g_drawColumn(Wall_t* thisWall, int x, float depthF) {
+	//Draw this wall collumn.
+	int screenYLow, screenYTop;
+	g_getWallProjections(
+		thisWall, 0.0f, 1.0f/depthF,
+		&screenYLow, &screenYTop
+	);
+	if ((screenYTop<0) || (screenYLow>=LCD_HEIGHT_PX)) {return; /* Completely offscreen vertically. */}
+
+	int yLow = f_max(0, screenYLow);
+	int yTop = f_min(LCD_HEIGHT_PX, screenYTop);
+	//Draw.
+	/*
+	for (int y=yLow; y<yTop; y++) {
+		//TBA for texturing.
+	}
+	*/
+	d_drawVerticalLine( //Generic draw.
+		emptyVec2_t(x, y), yTop-yLow,
+		v3_toRGB565(thisWall->colour)
+	);
+}
+
+
+
+void g_drawWall(Wall_t* thisWall, Camera_t* camera) {
+	if (!thisWall->valid) {return; /* Wall is not valid, exit. */}
+	Vec2_t cPosV2 = v2_fromV3(camera->position);
+	Vec2_t wallSV2 = v2_fromV3(thisWall->start);
+	Vec2_t wallEV2 = v2_fromV3(thisWall->end);
+
+	int startXPosition = g_getCentreX(wallSV2, camera);
+	int endXPosition = g_getCentreX(wallEV2, camera);
+	if (startXPosition == endXPosition) {return; /* Too thin to bother rendering. */}
+
+	float startZ = v2_distance(wallSV2, cPosV2);
+	float endZ = v2_distance(wallEV2, cPosV2);
+
+	int leftmost, rightmost;
+	float lZ, rZ;
+	if (startXPosition < endXPosition) {
+		leftmost = startXPosition;
+		rightmost = endXPosition;
+		lZ = startZ
+		rZ = endZ;
+	} else {
+		leftmost = endXPosition;
+		rightmost = startXPosition;
+		lZ = endZ
+		rZ = startZ;
+	}
+	float range = (float)(rightmost - leftmost);
+
+	if ((leftmost>=LCD_WIDTH_PX) || (rightmost<0)) {return; /* Wall is not onscreen. */}
+
+
+	//Clamp to screen bounds.
+	if (leftmost < 0) {
+		float t = (-leftmost) / range;	//How far into the wall is x=0?
+		lZ = f_lerp(lZ, rZ, t);
+		leftmost = 0;
+		range = (float)(rightmost - leftmost);
+	}
+
+	if (rightmost >= LCD_WIDTH_PX) {
+		float t = (rightmost - leftmost) / range;	//How far into the wall is the LCD's right edge?
+		rZ = f_lerp(lZ, rZ, t);
+		rightmost = LCD_WIDTH_PX - 1;
+		range = (float)(rightmost - leftmost);
+	}
+
+
+	//Draw, checking depthmap.
+	for (int x=leftmost; x<rightmost; x++) {
+		float t = (x-leftmost) / range;
+		float depthF = f_lerp(lZ, rZ, t);
+		unsigned char depth8b = g_mapDepth(depthF, camera->maxDistance);
+
+		unsigned char* currentDepthPTR = &(depthBuffer[x]);
+		if (depth8b < *currentDepthPTR) {
+			//This collumn renders in front, as it's closer.
+			*currentDepthPTR = depth8b;
+			g_drawColumn(thisWall, x, depthF);
+		}
+	}
+}
 
 
 
@@ -114,13 +251,15 @@ void g_drawWall(
 void g_drawFakeBG() {
 	d_fill(SKY_COLOUR); //Draw "sky"
 
+	/*
 	Vec2_t p;
 	p.x = 0.0f;
 	for (unsigned int y=LCD_HEIGHT_PX/2; y<LCD_HEIGHT_PX; y++) {
 		//Draw "floor"
 		p.y=y;
 		d_drawHorizontalLine(p, LCD_WIDTH_PX, FLOOR_COLOUR);
-	}	
+	}
+	*/	
 }
 
 
@@ -128,33 +267,18 @@ void g_drawFakeBG() {
 void g_drawFrame(Camera_t* camera, Wall_t* walls) {
 	//Loop horizontally through the screen.
 	g_drawFakeBG();
-	for (unsigned int x=0u; x<LCD_WIDTH_PX; x++) {
-		float t = (x + 0.5f) / LCD_WIDTH_PX; //[0,1]
-		float angleOffset = (t - 0.5f) * camera->FOV; ////Offset camera ray angle by [-FOV/2, +FOV/2]
 
-		float rayAngle = (float)(camera->yaw) + angleOffset;
-		Vec2_t direction = createVec2_t(
-			f_sin(rayAngle), f_cos(rayAngle)
+	//Clear "depth buffer" to max value (255s)
+	memset(depthBuffer, 0xFF, sizeof(depthBuffer));
+
+	//Loop through walls.
+	for (unsigned int wIndex=0u; wIndex<MAX_WALLS; wIndex++) {
+		Wall_t* thisWall = walls+wIndex;
+		g_drawWall(
+			thisWall, camera
 		);
-
-		Line_t thisRay = l_ray(
-			v2_fromV3(camera->position),
-			direction, camera->maxDistance
-		);
-
-		float xMult = f_cos(angleOffset); //Used to try combat fisheye effect, artificially changing ray lengths. Visually feels acceptable when applied.
-
-		//Loop through walls.
-		for (unsigned int wIndex=0u; wIndex<MAX_WALLS; wIndex++) {
-			Wall_t* thisWall = walls+wIndex;
-			if (!thisWall->valid) {continue; /* Wall is not valid, skip. */}
-			g_drawWall(
-				x, &thisRay,
-				thisWall, xMult,
-				camera->position.z
-			);
-		}
 	}
+
 	f_print(camera->position.x, 2);
 	f_print(camera->position.y, 2);
 	f_print(camera->position.z, 2);

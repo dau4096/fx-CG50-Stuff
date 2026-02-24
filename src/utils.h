@@ -42,6 +42,7 @@ float i_sin(int angle);
 float i_cos(int angle);
 float f_sin(float angle);
 float f_cos(float angle);
+int f_atan2_int(int y, int x);
 //// GENERAL MATHS ////
 
 
