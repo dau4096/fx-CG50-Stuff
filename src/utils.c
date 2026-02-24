@@ -199,26 +199,26 @@ Vec3_t v3_fromV2_alt(Vec2_t v2, float s) {return createVec3_t(v2.x, v2.y, s);}
 
 
 //// MISC ////
-Line_t l_ray(Vec2_t start, Vec2_t dir, float len) {
-	Line_t ln;
-	ln.start = start;
-	ln.end = v2_add(
-		v2_mul(dir, len), start
-	);
-	ln.length = len;
-	ln.dir = dir;
-	return ln;
+LineDef_t createLineDef_t(unsigned int vStart, unsigned int vEnd, unsigned int sFront, unsigned int sBack) {
+	LineDef_t linedef;
+
+	linedef.vStart = vStart;
+	linedef.vEnd = vEnd;
+	linedef.frontSector = sFront;
+	linedef.backSector = sBack;
+
+	return linedef;
 }
 
-Wall_t w_create(
-	Vec3_t start, Vec3_t end, Vec3_t colour
-) {
-	Wall_t wall;
-	wall.valid = TRUE;
-	wall.start = start;
-	wall.end = end;
-	wall.colour = colour;
-	return wall;
+Sector_t createSector_t(float hFloor, float hCeil, unsigned int* lns, unsigned int nLns) {
+	Sector_t sector;
+
+	sector.floorHeight = hFloor;
+	sector.ceilingHeight = hCeil;
+	sector.lineDefs = lns;
+	sector.numLineDefs = nLns;
+
+	return sector;
 }
 //// MISC ////
 

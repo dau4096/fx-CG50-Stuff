@@ -10,9 +10,33 @@
 
 
 
-Wall_t walls[MAX_WALLS];
-#define TURN_SPD 5     /* 5 deg per turn */
-#define MOVE_SPD 0.25f /* 0.25 units per press */
+
+//// SECTORS, VERTICES AND LINDEFS ////
+Vec2_t vertices[MAX_VERTICES];
+LineDef_t linedefs[MAX_LINEDEFS];
+Sector_t sectors[MAX_SECTORS];
+//// SECTORS, VERTICES AND LINDEFS ////
+
+
+void createTestGEO() {
+	//Vertices
+	vertices[0] = createVec2_t(-1.0f, -1.0f);
+	vertices[1] = createVec2_t(-1.0f,  1.0f);
+	vertices[2] = createVec2_t( 1.0f,  1.0f);
+	vertices[3] = createVec2_t( 1.0f, -1.0f);
+
+	//Lines (square Sector)
+	linedefs[0] = createLineDef_t(0, 1, 0, -1);
+	linedefs[1] = createLineDef_t(1, 2, 0, -1);
+	linedefs[2] = createLineDef_t(2, 3, 0, -1);
+	linedefs[3] = createLineDef_t(3, 0, 0, -1);
+
+	//Sector
+	int lnIndices[4] = {0, 1, 2, 3};
+	sectors[0] = createSector_t(-1.0f, 1.0f, lnIndices, 4);
+}
+
+
 
 void handleInput(Camera_t* camera, int* RUN) {
 	int key;
@@ -53,23 +77,11 @@ int main() {
 	camera.FOV = 70.0f; //70 deg
 	camera.maxDistance = 16.0f; //Maximum view distance.
 
-
-	//Add some testing walls;
-	walls[0] = w_create(
-		createVec3_t(-1.0f, 1.0f, -1.0f),
-		createVec3_t(1.0f, 2.0f, 1.0f),
-		createVec3_t(255.0f, 0.0f, 0.0f)
-	);
-	walls[1] = w_create(
-		createVec3_t(-1.0f, 1.0f, 1.0f),
-		createVec3_t(1.0f, 1.0f, 2.0f),
-		createVec3_t(0.0f, 255.0f, 0.0f)
-	);
-
+	createTestGEO();
 
 	int RUN = TRUE;
 	while (RUN) {
-		g_drawFrame(&camera, walls);
+		g_drawFrame(&camera, vertices, linedefs, sectors);
 		i_print(camera.yaw);
 
 		//d_printBuf((char*)(buf));

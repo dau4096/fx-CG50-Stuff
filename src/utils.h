@@ -93,8 +93,8 @@ Vec3_t v3_fromV2_alt(Vec2_t v2, float s);
 
 
 //// MISC ////
-Line_t l_ray(Vec2_t start, Vec2_t dir, float len); //Create "ray"
-Wall_t w_create(Vec3_t start, Vec3_t end, Vec3_t colour); //Create wall from given data.
+LineDef_t createLineDef_t(unsigned int vStart, unsigned int vEnd, unsigned int sFront, unsigned int sBack);
+Sector_t createSector_t(float hFloor, float hCeil, unsigned int* lns, unsigned int nLns);
 //// MISC ////
 
 

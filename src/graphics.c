@@ -133,17 +133,17 @@ void g_drawWall(
 
 
 void g_getWallProjections(
-	Wall_t* thisWall, float cameraZ, float invDistance,
+	LineDef_t* thisLineDef, float cameraZ, float invDistance,
 	int* screenYLow, int* screenYTop
 ) {
 	//Seems to render weirdly. z=1.0f camera is inline with z=0.0f wall somehow?
 
 	//Wall's start projection
-	float projectedYStart = (cameraZ - thisWall->start.z) * invDistance;
+	float projectedYStart = (thisLineDef->start.z - cameraZ) * invDistance;
 	int yStart = (int)(LCD_HEIGHT_PX * (0.5f - projectedYStart));
 
 	//Wall's end projection
-	float projectedYEnd = (cameraZ - thisWall->end.z) * invDistance;
+	float projectedYEnd = (thisLineDef->end.z - cameraZ) * invDistance;
 	int yEnd = (int)(LCD_HEIGHT_PX * (0.5f - projectedYEnd));
 
 	if (yStart < yEnd) {
@@ -156,11 +156,11 @@ void g_getWallProjections(
 }
 
 
-void g_drawColumn(Wall_t* thisWall, int x, float depthF) {
+void g_drawColumn(LineDef_t* thisLineDef, int x, float depthF, float cameraZ) {
 	//Draw this wall collumn.
 	int screenYLow, screenYTop;
 	g_getWallProjections(
-		thisWall, 0.0f, 1.0f/depthF,
+		thisLineDef, cameraZ, 1.0f/depthF,
 		&screenYLow, &screenYTop
 	);
 	if ((screenYTop<0) || (screenYLow>=LCD_HEIGHT_PX)) {return; /* Completely offscreen vertically. */}
@@ -175,17 +175,17 @@ void g_drawColumn(Wall_t* thisWall, int x, float depthF) {
 	*/
 	d_drawVerticalLine( //Generic draw.
 		emptyVec2_t(x, y), yTop-yLow,
-		v3_toRGB565(thisWall->colour)
+		v3_toRGB565(thisLineDef->colour)
 	);
 }
 
 
 
-void g_drawWall(Wall_t* thisWall, Camera_t* camera) {
-	if (!thisWall->valid) {return; /* Wall is not valid, exit. */}
+void g_drawLineDef_t(LineDef_t* thisLineDef, Camera_t* camera) {
+	if (!thisLineDef->valid) {return; /* Wall is not valid, exit. */}
 	Vec2_t cPosV2 = v2_fromV3(camera->position);
-	Vec2_t wallSV2 = v2_fromV3(thisWall->start);
-	Vec2_t wallEV2 = v2_fromV3(thisWall->end);
+	Vec2_t wallSV2 = v2_fromV3(thisLineDef->start);
+	Vec2_t wallEV2 = v2_fromV3(thisLineDef->end);
 
 	int startXPosition = g_getCentreX(wallSV2, camera);
 	int endXPosition = g_getCentreX(wallEV2, camera);
@@ -199,12 +199,12 @@ void g_drawWall(Wall_t* thisWall, Camera_t* camera) {
 	if (startXPosition < endXPosition) {
 		leftmost = startXPosition;
 		rightmost = endXPosition;
-		lZ = startZ
+		lZ = startZ;
 		rZ = endZ;
 	} else {
 		leftmost = endXPosition;
 		rightmost = startXPosition;
-		lZ = endZ
+		lZ = endZ;
 		rZ = startZ;
 	}
 	float range = (float)(rightmost - leftmost);
@@ -238,7 +238,7 @@ void g_drawWall(Wall_t* thisWall, Camera_t* camera) {
 		if (depth8b < *currentDepthPTR) {
 			//This collumn renders in front, as it's closer.
 			*currentDepthPTR = depth8b;
-			g_drawColumn(thisWall, x, depthF);
+			g_drawColumn(thisLineDef, x, depthF, camera->position.z);
 		}
 	}
 }
@@ -251,7 +251,7 @@ void g_drawWall(Wall_t* thisWall, Camera_t* camera) {
 void g_drawFakeBG() {
 	d_fill(SKY_COLOUR); //Draw "sky"
 
-	/*
+	/* //Removed lower half colour for now.
 	Vec2_t p;
 	p.x = 0.0f;
 	for (unsigned int y=LCD_HEIGHT_PX/2; y<LCD_HEIGHT_PX; y++) {
@@ -264,19 +264,26 @@ void g_drawFakeBG() {
 
 
 
-void g_drawFrame(Camera_t* camera, Wall_t* walls) {
+void g_drawFrame(
+	Camera_t* camera,
+	Vec2_t* vertices,
+	LineDef_t* linedefs,
+	Sector_t* sectors
+) {
 	//Loop horizontally through the screen.
 	g_drawFakeBG();
 
 	//Clear "depth buffer" to max value (255s)
 	memset(depthBuffer, 0xFF, sizeof(depthBuffer));
 
-	//Loop through walls.
-	for (unsigned int wIndex=0u; wIndex<MAX_WALLS; wIndex++) {
-		Wall_t* thisWall = walls+wIndex;
-		g_drawWall(
-			thisWall, camera
-		);
+	//Loop through sectors.
+	for (unsigned int sIndex=0u; sIndex<MAX_SECTORS; sIndex++) {
+		Sector_t* thisSector = sectors+sIndex;
+		//Loop through sector's linedefs.
+		for (unsigned int ldIndex=0u; ldIndex<thisSector->numLineDefs; ldIndex++) {
+			LineDef_t* thisLineDef = linedefs+ldIndex;
+			g_drawLineDef_t(thisLineDef, camera);
+		}
 	}
 
 	f_print(camera->position.x, 2);

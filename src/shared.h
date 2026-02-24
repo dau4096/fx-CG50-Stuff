@@ -10,16 +10,26 @@
 //Maths
 #define EPSILON 1e-5f
 #define PI 3.141597
+
+
+//Memory
 #define SINE_LUT_SIZE 90
 #define ATAN_LUT_BITS 6
 #define ATAN_LUT_SIZE 64
+
+#define MAX_VERTICES 128u
+#define MAX_LINEDEFS 64u
+#define MAX_SECTORS 16u
+
 
 //Logic
 #define TRUE 1
 #define FALSE 0
 
+
 //Misc
-#define MAX_WALLS 8u
+#define TURN_SPD 5     /* 5 deg per turn */
+#define MOVE_SPD 0.25f /* 0.25 units per press */
 //// CONSTANTS ////
 
 
@@ -45,16 +55,18 @@ inline Vec3_t emptyVec3_t() {return createVec3_t(0.0f, 0.0f, 0.0f);}
 
 
 typedef struct {
-	Vec2_t start, end; //Start/end 2d pos
-	Vec2_t dir; //Normalised dir
-	float length; //Length
-} Line_t;
+	unsigned int vStart; //Start vertex ID
+	unsigned int vEnd;   //End vertex ID
+	int frontSector;  //Sector ID this LineDef_t belongs to
+	int backSector;   //-1 if solid wall, else index of neighboring sector
+} LineDef_t;
 
 typedef struct {
-	Vec3_t start, end; //Start/end positions
-	Vec3_t colour; //RGB colour
-	int valid; //Bool validity
-} Wall_t;
+	float floorHeight;
+	float ceilingHeight;
+	unsigned int* lineDefs;   //array of IDs to Linedef_t[] array (like model indices)
+	unsigned int numLineDefs; //Length of ID array
+} Sector_t;
 
 typedef struct {
 	Vec3_t position; //3D Position
