@@ -1,107 +1,253 @@
-#ifndef UTILS_H
-#define UTILS_H
+/* utils.h */
+#pragma once
+
+#include <stdint.h>
+#include <fxcg/misc.h>
+#include <fxcg/display.h>
 
 
-#include "shared.h"
+#include "trigLUT.h" //Contains the trig L.U.T. for integer degrees 0-90*
+#include "shared.h" //Constants & Structs
+
 
 
 //// GENERAL MATHS ////
-//Fast inverse square root (Quake III Arena), but with added directive and renamed to f_invsqrt to fit naming scheme.
-float f_invsqrt( float number );
+static uint32_t isqrt64(uint64_t x) {
+    uint64_t res = 0;
+    uint64_t bit = 1ULL << 62;
+
+    while (bit > x) bit >>= 2;
+
+    while (bit != 0) {
+        if (x >= (res+bit)) {
+            x -= res + bit;
+            res = (res >> 1) + bit;
+        } else {
+            res >>= 1;
+        }
+        bit >>= 2;
+    }
+    return (uint32_t)res;
+}
 
 
-//Inlined because they're so simplistic.
 //Int funcs
-int i_abs(int v);
-int i_min(int a, int b);
-int i_max(int a, int b);
-int i_clamp(int v, int mi, int ma);
-int i_sign(int v);
+static int i_abs(int v) {return (v>0.0f) ? v : -v;}
+static int i_min(int a, int b) {return (a<b) ? a : b;}
+static int i_max(int a, int b) {return (a>b) ? a : b;}
+static int i_clamp(int v, int mi, int ma) {return i_max(mi, i_min(v, ma));}
+static int i_sign(int v) {return (v>0.0f) - (v<0.0f); /* Using strange C-"bool" maths. 1 if >0, 0 if =0, -1 if <0. */}
+static int i_sqrt(int v) {
+	if (v <= 0) {return 0; /* Invalid, can't do real sqrt on negatives or zero. */}
+	uint32_t u32 = isqrt64((uint64_t)(v));
+	return (int)(u32);
+}
 
-//Float funcs
-float f_abs(float v);
-float f_min(float a, float b);
-float f_max(float a, float b);
-float f_clamp(float v, float mi, float ma);
-int f_sign(float v);
-float f_floor(float v);
-float f_ceil(float v);
-float f_round(float v);
-float f_fract(float v);
-float f_sqrt(float v);
+//Fixed-point funcs
+static fixed_t f_mul(fixed_t a, fixed_t b) {return (fixed_t)(((int64_t)(a) * b) >> FIX_SHIFT);}
+static fixed_t f_div(fixed_t a, fixed_t b) {return (fixed_t)(((int64_t)(a) << FIX_SHIFT) / b);}
+static fixed_t f_abs(fixed_t v) {return (v>0.0f) ? v : -v;}
+static fixed_t f_min(fixed_t a, fixed_t b) {return (a<b) ? a : b;}
+static fixed_t f_max(fixed_t a, fixed_t b) {return (a>b) ? a : b;}
+static fixed_t f_clamp(fixed_t v, fixed_t mi, fixed_t ma) {return f_max(mi, f_min(v, ma));}
+static int f_sign(fixed_t v) {return (v>0.0f) - (v<0.0f); /* Using strange C-"bool" maths. 1 if >0, 0 if =0, -1 if <0. */}
+static fixed_t f_floor(fixed_t v) {
+	return v & ~(FIX_ONE - 1);
+}
+static fixed_t f_ceil(fixed_t v) {
+	if ((v & (FIX_ONE - 1)) == 0) {return v;}
+	return f_floor(v) + FIX_ONE;
+}
+static fixed_t f_round(fixed_t v) {return f_floor(v + (FIX_ONE >> 1));}
+static fixed_t f_fract(fixed_t v) {return v & (FIX_ONE - 1); /* Only the fractional bits */}
+static fixed_t f_sqrt(fixed_t x) {
+    if (x <= 0) {return 0;}
+
+    //scale up for fixed-point precision
+    uint64_t val = ((uint64_t)x) << FIX_SHIFT; //now Q32.32
+    uint32_t root = isqrt64(val);              //compute integer sqrt
+    return (fixed_t)(root);
+}
 
 
 //Linear interps
-float f_lerp(float a, float b, float t);
-Vec2_t v2_lerp(Vec2_t a, Vec2_t b, float t);
-Vec3_t v3_lerp(Vec3_t a, Vec3_t b, float t);
+static fixed_t f_lerp(fixed_t a, fixed_t b, fixed_t t) {return a + f_mul(t, (b - a));}
+static Vec2_t v2_lerp(Vec2_t a, Vec2_t b, fixed_t t) {
+	return createVec2_t(
+		f_lerp(a.x, b.x, t), f_lerp(a.y, b.y, t)
+	);
+}
+static Vec3_t v3_lerp(Vec3_t a, Vec3_t b, fixed_t t) {
+	return createVec3_t(
+		f_lerp(a.x, b.x, t), f_lerp(a.y, b.y, t), f_lerp(a.z, b.z, t)
+	);
+}
 
 
 //Trig : Works in degrees.
-float i_sin(int angle);
-float i_cos(int angle);
-float f_sin(float angle);
-float f_cos(float angle);
-int f_atan2_int(int y, int x);
+static float i_sin(int angle) {
+	//Wrap to 360 deg
+	int a = angle % 360;
+	if (a < 0) {a += 360;}
+
+	int quad = a / SINE_LUT_SIZE; //[0-3] quadrant
+	int idx  = a % SINE_LUT_SIZE; //[0-89] angle
+
+
+	int lut_index;
+	int sign;
+	switch (quad) {
+		case 0: {lut_index = idx;        sign =  1; break;} //[0-90] deg
+		case 1: {lut_index = 89 - idx;   sign =  1; break;} //[90-180] deg
+		case 2: {lut_index = idx;        sign = -1; break;} //[180-270] deg
+		case 3: {lut_index = 89 - idx;   sign = -1; break;} //[270-360] deg
+	}
+
+	return sign * sin_LUT[lut_index];
+}
+static float i_cos(int angle)   {return i_sin(angle + 90);}
+static float f_sin(float angle) {return i_sin(FIX_TO_INT(f_round(angle)));}
+static float f_cos(float angle) {return i_cos(FIX_TO_INT(f_round(angle)));}
+
+static fixed_t f_atan2_int(int y, int x) {
+	//Find atan2(y,x) in int degrees.
+	int absY = i_abs(y);
+	int absX = i_abs(x);
+
+	if ((absX == 0) && (absY == 0)) {return 0;}
+
+	//Find value in Look-Up-Table
+	int angle;
+	if (absX > absY) {
+		//Read directly
+		int idx = (absY << ATAN_LUT_BITS) / absX;
+		if (idx >= ATAN_LUT_SIZE) idx = ATAN_LUT_SIZE - 1;
+		angle = atan_LUT[idx];
+	} else {
+		//Read and modify value (not first 45 deg)
+		int idx = (absX << ATAN_LUT_BITS) / absY;
+		if (idx >= ATAN_LUT_SIZE) idx = ATAN_LUT_SIZE - 1;
+		angle = 90 - atan_LUT[idx];
+	}
+
+	if ((x >= 0) && (y >= 0)) {return angle;}
+	else if ((x < 0) && (y >= 0)) {return 180 - angle;}
+	else if ((x < 0) && (y < 0)) {return 180 + angle;}
+	else {return 360 - angle;}
+}
 //// GENERAL MATHS ////
 
 
 
 
 //// Vec2_t MATHS ////
-Vec2_t v2_add(Vec2_t a, Vec2_t b); 		// +
-Vec2_t v2_sub(Vec2_t a, Vec2_t b); 		// -
-Vec2_t v2_mul(Vec2_t a, float b);  		// ×
-Vec2_t v2_div(Vec2_t a, float b);  		// ÷
-float v2_dot(Vec2_t a, Vec2_t b);  		// •
-float v2_lenSQ(Vec2_t v);          		//Returns length^2
-float v2_len(Vec2_t v);            		//Includes sqrt [^]
-Vec2_t v2_normalise(Vec2_t v);     		//Returns normalised v_hat
-float v2_distance(Vec2_t a, Vec2_t b);  //Distance between 2 points
-Vec2_t v2_normalVec(Vec2_t v);			//Simplistic 2D normal.
-Vec2_t v2_min(Vec2_t a, Vec2_t b);		//Min of X/Y
-Vec2_t v2_max(Vec2_t a, Vec2_t b);		//Max of X/Y
+static Vec2_t v2_add(const Vec2_t a, const Vec2_t b) {return createVec2_t(a.x+b.x, a.y+b.y);}
+static Vec2_t v2_sub(const Vec2_t a, const Vec2_t b) {return createVec2_t(a.x-b.x, a.y-b.y);}
+static Vec2_t v2_mul(const Vec2_t a, const fixed_t b) {return createVec2_t(f_mul(a.x,b), f_mul(a.y,b));}
+static Vec2_t v2_div(const Vec2_t a, const fixed_t b) {
+	if (f_abs(b) < EPSILON) {return emptyVec2_t();}
+	return createVec2_t(f_div(a.x,b), f_div(a.y,b));
+}
+static fixed_t v2_dot(Vec2_t a, Vec2_t b) {return f_mul(a.x,b.x) + f_mul(a.y,b.y);}
+static fixed_t v2_lenSQ(Vec2_t v) {return v2_dot(v, v);}
+static fixed_t v2_len(Vec2_t v) {
+	fixed_t l = v2_lenSQ(v);
+	if (f_abs(l) < EPSILON) {return FIX_ZERO;}
+	return f_sqrt(l);
+}
+static Vec2_t v2_normalise(Vec2_t v) {
+	fixed_t l = v2_len(v);
+	if (f_abs(l) < EPSILON) {return emptyVec2_t();}
+	return v2_div(v, l);
+}
+static fixed_t v2_distance(Vec2_t a, Vec2_t b) {return v2_len(v2_sub(a, b));}
+static Vec2_t v2_normalVec(Vec2_t v) {return createVec2_t(-v.y, v.x); /* Always the same direction, doesn't matter for this use-case. */}
+static Vec2_t v2_min(Vec2_t a, Vec2_t b) {return createVec2_t(f_min(a.x, b.x), f_min(a.y, b.y));}
+static Vec2_t v2_max(Vec2_t a, Vec2_t b) {return createVec2_t(f_max(a.x, b.x), f_max(a.y, b.y));}
 //// Vec2_t MATHS ////
 
 
 
 
 //// Vec3_t MATHS ////
-Vec3_t v3_add(Vec3_t a, Vec3_t b);		// +
-Vec3_t v3_sub(Vec3_t a, Vec3_t b);		// -
-Vec3_t v3_mul(Vec3_t a, float b);		// ×
-Vec3_t v3_div(Vec3_t a, float b);		// ÷
-float v3_dot(Vec3_t a, Vec3_t b);		// •
-float v3_lenSQ(Vec3_t v);				//Returns length^2
-float v3_len(Vec3_t v);					//Includes sqrt [^]
-Vec3_t v3_normalise(Vec3_t v);			//Returns normalised v_hat
-float v3_distance(Vec3_t a, Vec3_t b);	//Distance between 2 points
-Vec3_t v3_normalVec(Vec3_t v);			//Simplistic 2D normal, passes Z through.
-Vec3_t v3_min(Vec3_t a, Vec3_t b);		//Min of X/Y
-Vec3_t v3_max(Vec3_t a, Vec3_t b);		//Max of X/Y
+static Vec3_t v3_add(Vec3_t a, Vec3_t b) {return createVec3_t(a.x+b.x, a.y+b.y, a.z+b.z);}
+static Vec3_t v3_sub(Vec3_t a, Vec3_t b) {return createVec3_t(a.x-b.x, a.y-b.y, a.z-b.z);}
+static Vec3_t v3_mul(Vec3_t a, fixed_t b) {return createVec3_t(f_mul(a.x,b), f_mul(a.y,b), f_mul(a.z,b));}
+static Vec3_t v3_div(Vec3_t a, fixed_t b) {
+	if (f_abs(b) < EPSILON) {return emptyVec3_t();}
+	return createVec3_t(f_div(a.x,b), f_div(a.y,b), f_div(a.z,b));
+}
+static fixed_t v3_dot(Vec3_t a, Vec3_t b) {
+	return f_mul(a.x,b.x) + f_mul(a.y,b.y) + f_mul(a.z,b.z);
+}
+static fixed_t v3_lenSQ(Vec3_t v) {return v3_dot(v, v);}
+static fixed_t v3_len(Vec3_t v) {
+	fixed_t l = v3_lenSQ(v);
+	if (f_abs(l) < EPSILON) {return FIX_ZERO;}
+	return f_sqrt(l);
+}
+static Vec3_t v3_normalise(Vec3_t v) {
+	fixed_t l = v3_len(v);
+	if (f_abs(l) < EPSILON) {return emptyVec3_t();}
+	return v3_div(v, l);
+}
+static fixed_t v3_distance(Vec3_t a, Vec3_t b) {return v3_len(v3_sub(a, b));}
+static Vec3_t v3_normalVec(Vec3_t v) {return createVec3_t(-v.y, v.x, v.z); /* In 2D, acts like v2_normalVec but with added Z. */}
+static Vec3_t v3_min(Vec3_t a, Vec3_t b) {return createVec3_t(f_min(a.x, b.x), f_min(a.y, b.y), f_min(a.z, b.z));}
+static Vec3_t v3_max(Vec3_t a, Vec3_t b) {return createVec3_t(f_max(a.x, b.x), f_max(a.y, b.y), f_max(a.z, b.z));}
 //// Vec3_t MATHS ////
 
 
 
 //// VecN_t CASTING ////
-Vec2_t v2_fromV3(Vec3_t v3); //Vec2_t(v3.xy);
-Vec3_t v3_fromV2(Vec2_t v2); //Vec3_t(v2.xy, 0.0f);
-Vec3_t v3_fromV2_alt(Vec2_t v2, float s);
+static Vec2_t v2_fromV3(Vec3_t v3) {return createVec2_t(v3.x, v3.y);}
+static Vec3_t v3_fromV2(Vec2_t v2) {return createVec3_t(v2.x, v2.y, FIX_ZERO);}
+static Vec3_t v3_fromV2_alt(Vec2_t v2, fixed_t s) {return createVec3_t(v2.x, v2.y, s);}
 //// VecN_t CASTING ////
 
 
 
 
 //// MISC ////
-LineDef_t createLineDef_t(unsigned int vStart, unsigned int vEnd, unsigned int sFront, unsigned int sBack);
-Sector_t createSector_t(float hFloor, float hCeil, unsigned int* lns, unsigned int nLns);
+static LineDef_t createLineDef_t(unsigned int vStart, unsigned int vEnd, unsigned int sFront, unsigned int sBack) {
+	LineDef_t linedef;
+
+	linedef.vStart = vStart;
+	linedef.vEnd = vEnd;
+	linedef.frontSector = sFront;
+	linedef.backSector = sBack;
+
+	return linedef;
+}
+
+static Sector_t createSector_t(float hFloor, float hCeil, unsigned int* lns, unsigned int nLns) {
+	Sector_t sector;
+
+	sector.floorHeight = hFloor;
+	sector.ceilingHeight = hCeil;
+	sector.lineDefs = lns;
+	sector.numLineDefs = nLns;
+
+	return sector;
+}
 //// MISC ////
 
 
 
 //// DISPLAY GENERIC ////
-color_t toRGB565(unsigned char r, unsigned char g, unsigned char b); //Convert R/G/B 8b to RGB565 16b
-color_t v3_toRGB565(Vec3_t colourRGB); //[^] but takes in a Vec3_t. Better for colour maths.
+static color_t toRGB565(unsigned char r, unsigned char g, unsigned char b) {
+	return (
+		((r & 0xF8) << 8) | //R (5b)
+		((g & 0xFC) << 3) | //G (6b)
+		((b & 0xF8) >> 3)   //B (5b)
+	);
+}
+static color_t v3_toRGB565(Vec3_t colourRGB) {
+	return toRGB565(
+		(unsigned char)(colourRGB.x), (unsigned char)(colourRGB.y), (unsigned char)(colourRGB.z)
+	);
+}
+
 
 static inline void d_fill(color_t fill) { //Fill the entire display with a colour
 	Bdisp_AllClr_VRAM(); //Clear VRAM.
@@ -111,19 +257,190 @@ static inline void d_update() { //Update the display.
 	Bdisp_PutDisp_DD(); //Push VRAM to screen
 }
 
-int d_drawPixel(Vec2_t position, color_t colour); //Draw a singular pixel into VRAM
+static int d_drawPixel(Vec2_t position, color_t colour) {
+	//Returns success/fail.
+	color_t* VRAM = (color_t*)GetVRAMAddress(); //Get VRAM start
+	unsigned int index = ((unsigned int)(position.y) * LCD_WIDTH_PX) + (unsigned int)(position.x);
+	if (index >= LCD_WIDTH_PX*LCD_HEIGHT_PX) {return FALSE;}
+	*(VRAM+index) = colour;
+	return TRUE;
+}
 
-int d_drawHorizontalLine(Vec2_t start, int length, color_t colour); //Draws a horizontal line into VRAM. length can be negative to go left.
-int d_drawVerticalLine(Vec2_t start, int length, color_t colour); //Draws a vertical line into VRAM. length can be negative to go upward.
+
+static int d_drawHorizontalLine(const Vec2_t start, int length, const color_t colour) {
+	if (length == 0) {return FALSE;}
+	color_t* VRAM = (color_t*)GetVRAMAddress(); //Get VRAM start
+	int x0 = FIX_TO_INT(start.x); int y = FIX_TO_INT(start.y);
+
+	//return if row outside screen
+	if ((y < 0) || (y >= LCD_HEIGHT_PX)) {return FALSE;}
+
+	//negative length must be accounted for
+	if (length < 0) {
+		x0 += length;
+		length = -length;
+	}
+
+	//Clamp to screen width
+	int x1 = f_min(x0 + length, LCD_WIDTH_PX);
+	if (x0 < 0) x0 = 0;
+	if (x0 >= x1) {return FALSE;}
+
+	unsigned int index = y * LCD_WIDTH_PX + x0;
+	for (int i=0; i<length; i++) {VRAM[index + i] = colour;}
+
+	return TRUE;
+}
 
 
-void d_printBuf(char* buf);
-void i_printXY(int v, Vec2_t pos);
-void i_print(int v);
-void f_printXY(int v, int decimals, Vec2_t pos);
-void f_print(float v, int decimals); //Value, number of decimals.
-void d_resetPrintLN();
+static int d_drawVerticalLine(const Vec2_t start, const int length, const color_t colour) {
+	if (length == 0) {return FALSE; /* Nothing to draw. */}
+
+	//Clamp X to screen range
+	int x = FIX_TO_INT(start.x);
+	if ((x < 0) || (x >= LCD_WIDTH_PX)) {return FALSE; /* offscreen */}
+
+	//Handle negative length.
+	int y0 = FIX_TO_INT(start.y);
+	int y1 = y0 + length;
+
+	//Ensure [y0 <= y1], swap otherwise.
+	if (y0 > y1) {
+		int tmp = y0;
+		y0 = y1;
+		y1 = tmp;
+	}
+
+	//Clamp Y to screen range
+	if ((y1 < 0) || (y0 >= LCD_HEIGHT_PX)) {return FALSE; /* offscreen */}
+	if (y0 < 0) {y0 = 0;}
+	if (y1 >= LCD_HEIGHT_PX) {y1 = LCD_HEIGHT_PX - 1;}
+
+	//get pointer to VRAM
+	color_t* VRAM = (color_t*)(GetVRAMAddress());
+	color_t* ptr = VRAM + (y0 * LCD_WIDTH_PX) + x;
+
+	//Draw in a loop
+	for (int y=y0; y<=y1; y++) {
+		*ptr = colour;
+		ptr += LCD_WIDTH_PX; //increment by one row
+	}
+
+	return TRUE;
+}
+
+
+
+
+static int i_countDigits(int v) {
+	if (v == 0) {return 1;}
+
+	int count = 0;
+	if (v < 0) {
+		count++; //for neg sign
+		v = -v;
+	}
+
+	while (v > 0) {
+		v /= 10;
+		count++;
+	}
+
+	return count;
+}
+
+
+static unsigned char lnIdx = 0u;
+#define CHAR_WIDTH 20
+#define MAX_PRINT_LINES 8
+static void d_printBuf(char* buf) {
+	int x = 1; //1px from the left
+	lnIdx = (lnIdx+1) % MAX_PRINT_LINES;
+	PrintXY(x, lnIdx, buf, TEXT_MODE_NORMAL, TEXT_COLOR_BLACK);
+}
+
+//Prints int at some given position
+static void i_printXY(int v, Vec2_t pos) {
+	unsigned char buf[12];
+	itoa(v, buf);
+	locate_OS(FIX_TO_INT(pos.x), FIX_TO_INT(pos.y));
+	Print_OS(buf, 0, 0);
+}
+
+//Automatically prints int using an incrementing line index.
+static void i_print(int v) {
+	lnIdx = (lnIdx+1) % MAX_PRINT_LINES;
+	i_printXY(v, (Vec2_t){FIX_ONE, INT_TO_FIX(lnIdx)});
+}
+
+
+//Includes leading 0s
+static void printPaddedInt(int v, int digits, Vec2_t pos) {
+	unsigned char buf[16];
+	itoa(v, buf);
+	int x = FIX_TO_INT(pos.x);
+	int y = FIX_TO_INT(pos.y);
+
+	int len = 0;
+	while (buf[len] != 0) {len++;}
+
+	int pad = digits - len;
+	//Show the 0s
+	while ((pad--) > 0) {
+		locate_OS(x, y);
+		Print_OS("0", 0, 0);
+		x += CHAR_WIDTH;
+	}
+
+	locate_OS(x, y);
+	Print_OS(buf, 0, 0);
+}
+
+//Prints float at some given position
+static void f_printXY(const fixed_t vFix, const int decimals, const Vec2_t pos) {
+	float v = FIX_TO_FLOAT(vFix);
+	int x = FIX_TO_INT(pos.x);
+	int y = FIX_TO_INT(pos.y);
+
+	//Handle negative values
+	int isNegative = 0;
+	if (v < 0) {
+		isNegative = 1;
+		v = -v;
+	}
+
+	int vWhole = (int)(v);
+	float vFrac = v - vWhole;
+
+	//display minus sign if needed
+	if (isNegative) {
+		locate_OS(x, y);
+		Print_OS("-", 0, 0);
+		x++;
+	}
+
+	//display whole part
+	i_printXY(vWhole, (Vec2_t){INT_TO_FIX(x), INT_TO_FIX(y)});
+
+	int wholeDigits = i_countDigits(vWhole);
+	x += wholeDigits;
+
+	//display decimal point
+	locate_OS(x, y);
+	Print_OS(".", 0, 0);
+	x++;
+
+	//make fractional whole (to be cast to int)
+	for (int i=0; i<decimals; i++) {vFrac *= 10.0f;}
+	//display fractional part
+	printPaddedInt((int)(vFrac), decimals, (Vec2_t){INT_TO_FIX(x), INT_TO_FIX(y)});
+}
+
+//Automatically prints float using an incrementing line index.
+static void f_print(fixed_t v, int decimals) {
+	lnIdx = (lnIdx+1) % MAX_PRINT_LINES;
+	f_printXY(v, decimals, (Vec2_t){FIX_ONE, INT_TO_FIX(lnIdx)});
+}
+
+static void d_resetPrintLN() {lnIdx = 0u;}
 //// DISPLAY GENERIC ////
-
-
-#endif
